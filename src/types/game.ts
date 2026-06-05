@@ -77,3 +77,18 @@ export type InterventionAction =
   | 'arrange_marriage'
   | 'spark_rivalry'
   | 'custom'
+
+export interface CreateCharacterInput {
+  name: string
+  age: number
+  gender: Gender
+  title: string
+  houseId: string
+  avatar: string
+  traits: string[]
+  preferences: string[]
+  bio: string
+  parentIds: string[]
+  spouseId: string
+  attributes: CharacterAttributes
+}

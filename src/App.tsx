@@ -1,10 +1,18 @@
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react'
 import { CharacterPanel } from './components/CharacterPanel'
+import { CreateCharacterModal } from './components/CreateCharacterModal'
 import { FamilyTreeStage } from './components/FamilyTreeStage'
 import { InterventionPanel } from './components/InterventionPanel'
 import { NarrativePanel } from './components/NarrativePanel'
 import { initialGameState } from './data/initialState'
-import type { CharacterReactions, GameState, InterventionAction, NarrativeEntry } from './types/game'
+import type {
+  CharacterReactions,
+  CreateCharacterInput,
+  GameState,
+  InterventionAction,
+  NarrativeEntry,
+} from './types/game'
+import { applyNewCharacter } from './utils/createCharacter'
 import {
   interveneAdvanceTime,
   interveneArrangeMarriage,
@@ -35,6 +43,7 @@ export default function App() {
   const [state, setState] = useState<GameState>(initialGameState)
   const [isProcessing, setIsProcessing] = useState(false)
   const [activeReactions, setActiveReactions] = useState<CharacterReactions>({})
+  const [createModalOpen, setCreateModalOpen] = useState(false)
   const reactionTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined)
 
   const selected = state.characters[state.selectedCharacterId]
@@ -59,6 +68,16 @@ export default function App() {
       if (reactionTimerRef.current) clearTimeout(reactionTimerRef.current)
     }
   }, [showReactions])
+
+  const handleCreateCharacter = useCallback((input: CreateCharacterInput) => {
+    const result = applyNewCharacter(state, input)
+    setState((prev) => ({
+      ...prev,
+      ...result.state,
+      characters: { ...prev.characters, ...result.state.characters },
+      narrative: [...prev.narrative, result.entry],
+    }))
+  }, [state])
 
   const handleSelectCharacter = useCallback((id: string) => {
     setState((prev) => ({
@@ -120,32 +139,52 @@ export default function App() {
           <h1 className="brand-title">Minicry</h1>
           <p className="brand-subtitle">叙事沙盒 · 家谱纪元</p>
         </div>
-        <nav className="house-tabs">
-          {Object.values(state.houses).map((h) => (
-            <button
-              key={h.id}
-              type="button"
-              className={`house-tab ${state.focusedHouseId === h.id ? 'active' : ''}`}
-              style={{ '--house-color': h.color } as CSSProperties}
-              onClick={() => {
-                const member = Object.values(state.characters).find(
-                  (c) => c.houseId === h.id,
-                )
-                if (member) {
-                  setState((prev) => ({
-                    ...prev,
-                    focusedHouseId: h.id,
-                    selectedCharacterId: member.id,
-                  }))
-                }
-              }}
-            >
-              <span className="house-tab-emblem">{h.emblem}</span>
-              {h.name}
-            </button>
-          ))}
-        </nav>
+        <div className="header-center">
+          <nav className="house-tabs">
+            {Object.values(state.houses).map((h) => (
+              <button
+                key={h.id}
+                type="button"
+                className={`house-tab ${state.focusedHouseId === h.id ? 'active' : ''}`}
+                style={{ '--house-color': h.color } as CSSProperties}
+                onClick={() => {
+                  const member = Object.values(state.characters).find(
+                    (c) => c.houseId === h.id,
+                  )
+                  if (member) {
+                    setState((prev) => ({
+                      ...prev,
+                      focusedHouseId: h.id,
+                      selectedCharacterId: member.id,
+                    }))
+                  }
+                }}
+              >
+                <span className="house-tab-emblem">{h.emblem}</span>
+                {h.name}
+              </button>
+            ))}
+          </nav>
+        </div>
+
+        <div className="header-actions">
+          <button
+            type="button"
+            className="create-char-btn"
+            onClick={() => setCreateModalOpen(true)}
+          >
+            <span className="create-char-icon">＋</span>
+            创建人物
+          </button>
+        </div>
       </header>
+
+      <CreateCharacterModal
+        open={createModalOpen}
+        state={state}
+        onClose={() => setCreateModalOpen(false)}
+        onCreate={handleCreateCharacter}
+      />
 
       <div className="game-layout">
         <CharacterPanel
