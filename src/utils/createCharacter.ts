@@ -41,14 +41,25 @@ function addRelation(
 }
 
 function childLabel(gender: Character['gender']): string {
-  if (gender === 'male') return '儿子'
-  if (gender === 'female') return '女儿'
-  return '子女'
+  return gender === 'male' ? '儿子' : '女儿'
+}
+
+export function formatCharacterName(
+  givenName: string,
+  surname: string,
+): string {
+  const given = givenName.trim()
+  const sur = surname.trim()
+  if (given && sur) return `${given}·${sur}`
+  return given || sur
 }
 
 export function buildCharacterFromInput(input: CreateCharacterInput): Character {
   const id = nextCharId()
   const relations: Relation[] = []
+  const givenName = input.givenName.trim()
+  const surname = input.surname.trim()
+  const nickname = input.nickname.trim()
 
   for (const parentId of input.parentIds) {
     relations.push({ targetId: parentId, type: 'parent', label: '父母' })
@@ -60,7 +71,10 @@ export function buildCharacterFromInput(input: CreateCharacterInput): Character 
 
   return {
     id,
-    name: input.name.trim(),
+    name: formatCharacterName(givenName, surname),
+    givenName,
+    surname,
+    nickname: nickname || undefined,
     age: input.age,
     gender: input.gender,
     title: input.title.trim() || '族人',
@@ -137,6 +151,7 @@ export function applyNewCharacter(
     state: {
       characters: updatedCharacters,
       selectedCharacterId: character.id,
+      treeFocusCharacterId: character.id,
       focusedHouseId: character.houseId,
     },
     entry: {
@@ -158,7 +173,11 @@ export const DEFAULT_ATTRIBUTES: Character['attributes'] = {
   learning: 10,
 }
 
-export const AVATAR_PRESETS = ['👤', '👑', '⚔️', '📜', '🎭', '🌿', '💎', '🏹', '🕯️', '🦅']
+export function togglePresetValue(list: string[], value: string): string[] {
+  return list.includes(value)
+    ? list.filter((item) => item !== value)
+    : [...list, value]
+}
 
 export function getParentOptions(
   characters: Record<string, Character>,

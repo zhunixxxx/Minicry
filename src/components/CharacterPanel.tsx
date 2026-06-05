@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import type { Character, House } from '../types/game'
 import { CharacterLink } from './CharacterLink'
+import { CharacterAvatar } from './CharacterAvatar'
 import { getRelationLabel } from '../utils/familyTree'
 import { linkifyCharacterNames } from '../utils/linkifyNames'
 
@@ -22,7 +23,6 @@ const ATTR_LABELS: Record<string, string> = {
 const GENDER_LABEL: Record<string, string> = {
   male: '男',
   female: '女',
-  other: '其他',
 }
 
 export function CharacterPanel({
@@ -52,13 +52,18 @@ export function CharacterPanel({
           className="character-avatar"
           style={{ borderColor: house.color }}
         >
-          <span className="avatar-emoji">{character.avatar}</span>
+          <CharacterAvatar avatar={character.avatar} size={52} />
           <span className="house-emblem" title={house.name}>
             {house.emblem}
           </span>
         </div>
         <div className="character-identity">
-          <h2 className="character-name">{character.name}</h2>
+          <h2 className="character-name">
+            {character.name}
+            {character.nickname ? (
+              <span className="character-nickname">「{character.nickname}」</span>
+            ) : null}
+          </h2>
           <p className="character-title">{character.title}</p>
           <p className="character-house" style={{ color: house.color }}>
             {house.name} · {house.motto}

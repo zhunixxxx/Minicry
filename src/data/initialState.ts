@@ -6,6 +6,7 @@ const rawInitialState: GameState = {
   month: 3,
   focusedHouseId: 'house-blackwood',
   selectedCharacterId: 'char-elena',
+  treeFocusCharacterId: 'char-elena',
   houses: {
     'house-blackwood': {
       id: 'house-blackwood',

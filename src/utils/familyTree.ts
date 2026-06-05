@@ -203,6 +203,197 @@ export function layoutFamilyTree(
   return { nodes, edges, width: Math.max(maxWidth, 600), height }
 }
 
+function collectMeetingEdges(
+  participants: Set<string>,
+  characters: Record<string, Character>,
+): TreeEdge[] {
+  const edges: TreeEdge[] = []
+  const seen = new Set<string>()
+
+  for (const id of participants) {
+    const char = characters[id]
+    if (!char) continue
+
+    for (const parentId of char.parentIds) {
+      if (!participants.has(parentId)) continue
+      const key = `p:${parentId}->${id}`
+      if (seen.has(key)) continue
+      seen.add(key)
+      edges.push({ from: parentId, to: id, type: 'parent' })
+    }
+
+    for (const spouseId of char.spouseIds) {
+      if (!participants.has(spouseId)) continue
+      const key = `s:${[id, spouseId].sort().join('-')}`
+      if (seen.has(key)) continue
+      seen.add(key)
+      edges.push({ from: id, to: spouseId, type: 'spouse' })
+    }
+  }
+
+  return edges
+}
+
+function findMeetingComponents(
+  participants: Set<string>,
+  edges: TreeEdge[],
+): string[][] {
+  const parent = new Map<string, string>()
+
+  function find(id: string): string {
+    const p = parent.get(id)
+    if (!p) {
+      parent.set(id, id)
+      return id
+    }
+    if (p === id) return id
+    const root = find(p)
+    parent.set(id, root)
+    return root
+  }
+
+  function unite(a: string, b: string) {
+    parent.set(find(a), find(b))
+  }
+
+  for (const id of participants) {
+    if (!parent.has(id)) parent.set(id, id)
+  }
+
+  for (const edge of edges) {
+    if (participants.has(edge.from) && participants.has(edge.to)) {
+      unite(edge.from, edge.to)
+    }
+  }
+
+  const groups = new Map<string, string[]>()
+  for (const id of participants) {
+    const root = find(id)
+    if (!groups.has(root)) groups.set(root, [])
+    groups.get(root)!.push(id)
+  }
+
+  return [...groups.values()]
+}
+
+function layoutParticipantGroup(
+  memberIds: Set<string>,
+  characters: Record<string, Character>,
+  offsetX: number,
+  offsetY: number,
+): { nodes: TreeNode[]; edges: TreeEdge[]; width: number; height: number } {
+  const genCache = new Map<string, number>()
+  const byGeneration = new Map<number, string[][]>()
+  const units = buildFamilyUnits(memberIds, characters)
+
+  for (const unit of units) {
+    const gen = Math.max(...unit.map((id) => getGeneration(id, characters, genCache)))
+    if (!byGeneration.has(gen)) byGeneration.set(gen, [])
+    byGeneration.get(gen)!.push(unit)
+  }
+
+  const generations = [...byGeneration.keys()].sort((a, b) => a - b)
+  const nodes: TreeNode[] = []
+  const edges: TreeEdge[] = []
+  let maxWidth = 0
+
+  generations.forEach((gen, genIndex) => {
+    const unitsAtGen = byGeneration.get(gen)!
+    let xCursor = offsetX
+
+    unitsAtGen.forEach((unit) => {
+      const unitWidth =
+        unit.length * NODE_WIDTH + (unit.length - 1) * SPOUSE_GAP
+
+      unit.forEach((charId, i) => {
+        const char = characters[charId]
+        if (!char) return
+
+        nodes.push({
+          id: charId,
+          character: char,
+          x: xCursor + i * (NODE_WIDTH + SPOUSE_GAP),
+          y: offsetY + genIndex * (NODE_HEIGHT + V_GAP),
+          generation: gen,
+        })
+
+        if (i > 0) {
+          edges.push({
+            from: unit[i - 1],
+            to: charId,
+            type: 'spouse',
+          })
+        }
+      })
+
+      xCursor += unitWidth + H_GAP
+    })
+
+    maxWidth = Math.max(maxWidth, xCursor - offsetX)
+  })
+
+  for (const id of memberIds) {
+    const char = characters[id]
+    if (!char) continue
+    for (const parentId of char.parentIds) {
+      if (memberIds.has(parentId)) {
+        edges.push({ from: parentId, to: id, type: 'parent' })
+      }
+    }
+  }
+
+  const height =
+    generations.length > 0
+      ? generations.length * (NODE_HEIGHT + V_GAP)
+      : NODE_HEIGHT
+
+  return { nodes, edges, width: maxWidth, height }
+}
+
+/** 会晤布局：仅展示参与者，仅有血缘/家族关系的才连线 */
+export function layoutMeetingTree(
+  participantIds: string[],
+  characters: Record<string, Character>,
+): TreeLayout {
+  const participants = new Set(
+    participantIds.filter((id) => characters[id]?.isAlive !== false),
+  )
+
+  if (participants.size === 0) {
+    return { nodes: [], edges: [], width: 600, height: 400 }
+  }
+
+  const relationEdges = collectMeetingEdges(participants, characters)
+  const components = findMeetingComponents(participants, relationEdges)
+
+  const allNodes: TreeNode[] = []
+  const allEdges: TreeEdge[] = []
+  let xOffset = 40
+  let maxHeight = NODE_HEIGHT + 40
+
+  components.forEach((component) => {
+    const memberIds = new Set(component)
+    const {
+      nodes,
+      edges,
+      width,
+      height,
+    } = layoutParticipantGroup(memberIds, characters, xOffset, 40)
+
+    allNodes.push(...nodes)
+    allEdges.push(...edges)
+    xOffset += Math.max(width, NODE_WIDTH) + H_GAP * 2
+    maxHeight = Math.max(maxHeight, height + 80)
+  })
+
+  return {
+    nodes: allNodes,
+    edges: allEdges,
+    width: Math.max(xOffset, 600),
+    height: maxHeight,
+  }
+}
+
 export function getRelationLabel(type: string): string {
   const labels: Record<string, string> = {
     parent: '父母',

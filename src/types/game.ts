@@ -1,4 +1,4 @@
-export type Gender = 'male' | 'female' | 'other'
+export type Gender = 'male' | 'female'
 
 export type RelationType =
   | 'parent'
@@ -26,6 +26,9 @@ export interface CharacterAttributes {
 export interface Character {
   id: string
   name: string
+  surname?: string
+  givenName?: string
+  nickname?: string
   age: number
   gender: Gender
   title: string
@@ -67,8 +70,17 @@ export interface GameState {
   characters: Record<string, Character>
   houses: Record<string, House>
   narrative: NarrativeEntry[]
+  /** 左侧档案与互动发起者 */
   selectedCharacterId: string
+  /** 家谱舞台布局焦点（切换家族时更新，不影响左侧档案） */
+  treeFocusCharacterId: string
   focusedHouseId: string
+}
+
+/** 临时会晤会话（仅影响家谱舞台展示） */
+export interface MeetingSession {
+  hostId: string
+  participantIds: string[]
 }
 
 export type InterventionAction =
@@ -79,7 +91,9 @@ export type InterventionAction =
   | 'custom'
 
 export interface CreateCharacterInput {
-  name: string
+  surname: string
+  givenName: string
+  nickname: string
   age: number
   gender: Gender
   title: string

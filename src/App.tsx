@@ -10,9 +10,17 @@ import type {
   CreateCharacterInput,
   GameState,
   InterventionAction,
+  MeetingSession,
   NarrativeEntry,
 } from './types/game'
 import { applyNewCharacter } from './utils/createCharacter'
+import {
+  buildMeetingEndEntry,
+  buildMeetingStartEntry,
+} from './utils/meetingNarrative'
+import { executeInteraction } from './interactions/executeInteraction'
+import { dialoguesToReactions } from './interactions/dialogues'
+import type { InteractionActionId, InteractionContext } from './types/interactions'
 import {
   interveneAdvanceTime,
   interveneArrangeMarriage,
@@ -44,6 +52,7 @@ export default function App() {
   const [isProcessing, setIsProcessing] = useState(false)
   const [activeReactions, setActiveReactions] = useState<CharacterReactions>({})
   const [createModalOpen, setCreateModalOpen] = useState(false)
+  const [meetingSession, setMeetingSession] = useState<MeetingSession | null>(null)
   const reactionTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined)
 
   const selected = state.characters[state.selectedCharacterId]
@@ -83,9 +92,87 @@ export default function App() {
     setState((prev) => ({
       ...prev,
       selectedCharacterId: id,
+      treeFocusCharacterId: id,
       focusedHouseId: prev.characters[id]?.houseId ?? prev.focusedHouseId,
     }))
   }, [])
+
+  /** 会晤中切换主控：仅更新左侧档案，不改变家谱视图 */
+  const handleSelectProtagonist = useCallback((id: string) => {
+    setState((prev) => ({
+      ...prev,
+      selectedCharacterId: id,
+      focusedHouseId: prev.characters[id]?.houseId ?? prev.focusedHouseId,
+    }))
+  }, [])
+
+  const handleFocusHouse = useCallback((houseId: string) => {
+    if (meetingSession) return
+    setState((prev) => {
+      const member = Object.values(prev.characters).find(
+        (c) => c.isAlive && c.houseId === houseId,
+      )
+      if (!member) return { ...prev, focusedHouseId: houseId }
+      return {
+        ...prev,
+        focusedHouseId: houseId,
+        treeFocusCharacterId: member.id,
+      }
+    })
+  }, [meetingSession])
+
+  const handleStartMeeting = useCallback((participantIds: string[]) => {
+    const unique = [...new Set(participantIds)].filter(
+      (id) => state.characters[id]?.isAlive,
+    )
+    if (unique.length < 2) return
+
+    const session: MeetingSession = {
+      hostId: state.selectedCharacterId,
+      participantIds: unique,
+    }
+    const entry = buildMeetingStartEntry(state, session)
+
+    setMeetingSession(session)
+    setState((prev) => ({
+      ...prev,
+      narrative: [...prev.narrative, entry],
+    }))
+    if (entry.reactions) showReactions(entry.reactions)
+  }, [state, showReactions])
+
+  const handleEndMeeting = useCallback(() => {
+    if (!meetingSession) return
+
+    const entry = buildMeetingEndEntry(state, meetingSession)
+
+    setMeetingSession(null)
+    setState((prev) => ({
+      ...prev,
+      narrative: [...prev.narrative, entry],
+    }))
+    if (entry.reactions) showReactions(entry.reactions)
+  }, [meetingSession, state, showReactions])
+
+  const handleExecuteInteraction = useCallback(
+    (actionId: InteractionActionId, ctx: InteractionContext) => {
+      try {
+        const result = executeInteraction(actionId, ctx, state)
+        setState((prev) => ({
+          ...prev,
+          narrative: [...prev.narrative, result.entry],
+        }))
+        if (result.dialogues?.length) {
+          showReactions(dialoguesToReactions(result.dialogues))
+        } else if (result.entry.reactions) {
+          showReactions(result.entry.reactions)
+        }
+      } catch (err) {
+        console.error(err)
+      }
+    },
+    [state, showReactions],
+  )
 
   const applyIntervention = useCallback(
     async (action: InterventionAction, customText?: string) => {
@@ -147,18 +234,7 @@ export default function App() {
                 type="button"
                 className={`house-tab ${state.focusedHouseId === h.id ? 'active' : ''}`}
                 style={{ '--house-color': h.color } as CSSProperties}
-                onClick={() => {
-                  const member = Object.values(state.characters).find(
-                    (c) => c.houseId === h.id,
-                  )
-                  if (member) {
-                    setState((prev) => ({
-                      ...prev,
-                      focusedHouseId: h.id,
-                      selectedCharacterId: member.id,
-                    }))
-                  }
-                }}
+                onClick={() => handleFocusHouse(h.id)}
               >
                 <span className="house-tab-emblem">{h.emblem}</span>
                 {h.name}
@@ -195,12 +271,17 @@ export default function App() {
         />
 
         <FamilyTreeStage
-          focusCharacterId={state.selectedCharacterId}
+          focusCharacterId={state.treeFocusCharacterId}
           selectedCharacterId={state.selectedCharacterId}
-          characters={state.characters}
+          state={state}
           houses={state.houses}
           characterReactions={activeReactions}
+          meetingSession={meetingSession}
           onSelect={handleSelectCharacter}
+          onSelectProtagonist={handleSelectProtagonist}
+          onExecuteInteraction={handleExecuteInteraction}
+          onStartMeeting={handleStartMeeting}
+          onEndMeeting={handleEndMeeting}
         />
 
         <NarrativePanel

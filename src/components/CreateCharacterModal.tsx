@@ -1,13 +1,18 @@
 import { useEffect, useState } from 'react'
 import type { Character, CreateCharacterInput, GameState } from '../types/game'
+import { PREFERENCE_PRESETS, TRAIT_PRESETS } from '../data/characterPresets'
 import {
-  AVATAR_PRESETS,
   DEFAULT_ATTRIBUTES,
   getParentOptions,
   getSpouseOptions,
-  parsePreferencesInput,
-  parseTraitsInput,
+  togglePresetValue,
 } from '../utils/createCharacter'
+import {
+  AGE_GROUP_LABELS,
+  getAgeGroup,
+  getAvatarOptions,
+} from '../utils/avatars'
+import { CharacterAvatar } from './CharacterAvatar'
 
 interface Props {
   open: boolean
@@ -24,14 +29,22 @@ const ATTR_LABELS: Record<keyof CreateCharacterInput['attributes'], string> = {
   learning: '学识',
 }
 
+function defaultAvatar(gender: CreateCharacterInput['gender'], age: number): string {
+  return getAvatarOptions(gender, age)[0]
+}
+
 function emptyForm(houseId: string): CreateCharacterInput {
+  const gender: CreateCharacterInput['gender'] = 'male'
+  const age = 20
   return {
-    name: '',
-    age: 20,
-    gender: 'male',
+    surname: '',
+    givenName: '',
+    nickname: '',
+    age,
+    gender,
     title: '',
     houseId,
-    avatar: '👤',
+    avatar: defaultAvatar(gender, age),
     traits: [],
     preferences: [],
     bio: '',
@@ -45,15 +58,14 @@ export function CreateCharacterModal({ open, state, onClose, onCreate }: Props) 
   const [form, setForm] = useState<CreateCharacterInput>(() =>
     emptyForm(state.focusedHouseId),
   )
-  const [traitsText, setTraitsText] = useState('')
-  const [prefsText, setPrefsText] = useState('')
+  const [ageInput, setAgeInput] = useState('20')
   const [error, setError] = useState('')
 
   useEffect(() => {
     if (!open) return
-    setForm(emptyForm(state.focusedHouseId))
-    setTraitsText('')
-    setPrefsText('')
+    const next = emptyForm(state.focusedHouseId)
+    setForm(next)
+    setAgeInput(String(next.age))
     setError('')
   }, [open, state.focusedHouseId])
 
@@ -71,6 +83,19 @@ export function CreateCharacterModal({ open, state, onClose, onCreate }: Props) 
       document.body.style.overflow = ''
     }
   }, [open, onClose])
+
+  const avatarOptions = getAvatarOptions(form.gender, form.age)
+  const ageGroup = getAgeGroup(form.age)
+
+  useEffect(() => {
+    if (!open) return
+    setForm((prev) => {
+      const options = getAvatarOptions(prev.gender, prev.age)
+      const avatar = options.includes(prev.avatar) ? prev.avatar : options[0]
+      if (avatar === prev.avatar) return prev
+      return { ...prev, avatar }
+    })
+  }, [open, form.gender, form.age])
 
   if (!open) return null
 
@@ -98,22 +123,64 @@ export function CreateCharacterModal({ open, state, onClose, onCreate }: Props) 
     })
   }
 
+  function toggleTrait(trait: string) {
+    setForm((prev) => ({
+      ...prev,
+      traits: togglePresetValue(prev.traits, trait),
+    }))
+  }
+
+  function togglePreference(pref: string) {
+    setForm((prev) => ({
+      ...prev,
+      preferences: togglePresetValue(prev.preferences, pref),
+    }))
+  }
+
+  function normalizeAge(raw: string): number | null {
+    if (raw.trim() === '') return null
+    const n = Number(raw)
+    if (!Number.isFinite(n) || !Number.isInteger(n)) return null
+    return n
+  }
+
+  function commitAge(raw: string): number {
+    const n = normalizeAge(raw)
+    const clamped = Math.min(120, Math.max(0, n ?? 0))
+    setAgeInput(String(clamped))
+    update('age', clamped)
+    return clamped
+  }
+
+  function handleAgeChange(raw: string) {
+    setAgeInput(raw)
+    const n = normalizeAge(raw)
+    if (n !== null) {
+      update('age', Math.min(120, Math.max(0, n)))
+    }
+  }
+
+  function handleAgeBlur() {
+    commitAge(ageInput)
+  }
+
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!form.name.trim()) {
-      setError('请填写人物姓名')
+    const age = commitAge(ageInput)
+    if (!form.surname.trim()) {
+      setError('请填写姓氏')
       return
     }
-    if (form.age < 0 || form.age > 120) {
+    if (!form.givenName.trim()) {
+      setError('请填写名字')
+      return
+    }
+    if (age < 0 || age > 120) {
       setError('年龄须在 0–120 之间')
       return
     }
 
-    onCreate({
-      ...form,
-      traits: parseTraitsInput(traitsText),
-      preferences: parsePreferencesInput(prefsText),
-    })
+    onCreate({ ...form, age })
     onClose()
   }
 
@@ -146,25 +213,31 @@ export function CreateCharacterModal({ open, state, onClose, onCreate }: Props) 
         <form className="modal-body" onSubmit={handleSubmit}>
           <section className="form-section">
             <h3>基本信息</h3>
-            <div className="form-grid">
-              <label className="form-field form-field--wide">
-                <span>姓名 *</span>
+            <div className="form-grid form-grid--3">
+              <label className="form-field">
+                <span>姓氏 *</span>
                 <input
                   type="text"
-                  value={form.name}
-                  onChange={(e) => update('name', e.target.value)}
-                  placeholder="例如：艾伦·黑木"
+                  value={form.surname}
+                  onChange={(e) => update('surname', e.target.value)}
                   autoFocus
                 />
               </label>
               <label className="form-field">
-                <span>年龄</span>
+                <span>名称 *</span>
                 <input
-                  type="number"
-                  min={0}
-                  max={120}
-                  value={form.age}
-                  onChange={(e) => update('age', Number(e.target.value))}
+                  type="text"
+                  value={form.givenName}
+                  onChange={(e) => update('givenName', e.target.value)}
+                />
+              </label>
+              <label className="form-field">
+                <span>昵称</span>
+                <input
+                  type="text"
+                  value={form.nickname}
+                  onChange={(e) => update('nickname', e.target.value)}
+                  placeholder="例如：灰狼"
                 />
               </label>
               <label className="form-field">
@@ -177,8 +250,18 @@ export function CreateCharacterModal({ open, state, onClose, onCreate }: Props) 
                 >
                   <option value="male">男</option>
                   <option value="female">女</option>
-                  <option value="other">其他</option>
                 </select>
+              </label>
+              <label className="form-field">
+                <span>年龄</span>
+                <input
+                  type="number"
+                  min={0}
+                  max={120}
+                  value={ageInput}
+                  onChange={(e) => handleAgeChange(e.target.value)}
+                  onBlur={handleAgeBlur}
+                />
               </label>
               <label className="form-field">
                 <span>职业 / 头衔</span>
@@ -186,10 +269,11 @@ export function CreateCharacterModal({ open, state, onClose, onCreate }: Props) 
                   type="text"
                   value={form.title}
                   onChange={(e) => update('title', e.target.value)}
-                  placeholder="例如：黑木骑士"
                 />
               </label>
-              <label className="form-field">
+            </div>
+            <div className="form-grid">
+              <label className="form-field form-field--wide">
                 <span>所属家族</span>
                 <select
                   value={form.houseId}
@@ -209,26 +293,24 @@ export function CreateCharacterModal({ open, state, onClose, onCreate }: Props) 
             </div>
 
             <div className="form-field">
-              <span>头像</span>
-              <div className="avatar-picker">
-                {AVATAR_PRESETS.map((emoji) => (
+              <span>
+                头像
+                <span className="form-hint-inline">
+                  （{form.gender === 'male' ? '男' : '女'} · {AGE_GROUP_LABELS[ageGroup]}）
+                </span>
+              </span>
+              <div className="avatar-picker avatar-picker--generated">
+                {avatarOptions.map((avatarId) => (
                   <button
-                    key={emoji}
+                    key={avatarId}
                     type="button"
-                    className={`avatar-option ${form.avatar === emoji ? 'selected' : ''}`}
-                    onClick={() => update('avatar', emoji)}
+                    className={`avatar-option avatar-option--svg ${form.avatar === avatarId ? 'selected' : ''}`}
+                    onClick={() => update('avatar', avatarId)}
+                    title="选择头像"
                   >
-                    {emoji}
+                    <CharacterAvatar avatar={avatarId} size={44} />
                   </button>
                 ))}
-                <input
-                  className="avatar-custom"
-                  type="text"
-                  maxLength={2}
-                  value={form.avatar}
-                  onChange={(e) => update('avatar', e.target.value)}
-                  placeholder="自定义"
-                />
               </div>
             </div>
           </section>
@@ -236,24 +318,36 @@ export function CreateCharacterModal({ open, state, onClose, onCreate }: Props) 
           <section className="form-section">
             <h3>性格与传记</h3>
             <div className="form-grid">
-              <label className="form-field form-field--wide">
+              <div className="form-field form-field--full">
                 <span>性格特质</span>
-                <input
-                  type="text"
-                  value={traitsText}
-                  onChange={(e) => setTraitsText(e.target.value)}
-                  placeholder="用逗号分隔，如：勇敢、谨慎"
-                />
-              </label>
-              <label className="form-field form-field--wide">
+                <div className="chip-picker">
+                  {TRAIT_PRESETS.map((trait) => (
+                    <button
+                      key={trait}
+                      type="button"
+                      className={`chip-option chip-trait ${form.traits.includes(trait) ? 'selected' : ''}`}
+                      onClick={() => toggleTrait(trait)}
+                    >
+                      {trait}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="form-field form-field--full">
                 <span>喜好</span>
-                <input
-                  type="text"
-                  value={prefsText}
-                  onChange={(e) => setPrefsText(e.target.value)}
-                  placeholder="用逗号分隔，如：狩猎、诗歌"
-                />
-              </label>
+                <div className="chip-picker">
+                  {PREFERENCE_PRESETS.map((pref) => (
+                    <button
+                      key={pref}
+                      type="button"
+                      className={`chip-option chip-pref ${form.preferences.includes(pref) ? 'selected' : ''}`}
+                      onClick={() => togglePreference(pref)}
+                    >
+                      {pref}
+                    </button>
+                  ))}
+                </div>
+              </div>
               <label className="form-field form-field--full">
                 <span>人物传记</span>
                 <textarea
@@ -282,8 +376,15 @@ export function CreateCharacterModal({ open, state, onClose, onCreate }: Props) 
                           checked={form.parentIds.includes(c.id)}
                           onChange={() => toggleParent(c.id)}
                         />
-                        <span>
-                          {c.avatar} {c.name}（{c.age}岁）
+                        <CharacterAvatar
+                          avatar={c.avatar}
+                          size={22}
+                          className="checkbox-item-avatar"
+                        />
+                        <span className="checkbox-item-text">
+                          {c.name}
+                          {c.nickname ? `「${c.nickname}」` : ''}
+                          <span className="checkbox-item-meta">（{c.age}岁）</span>
                         </span>
                       </label>
                     ))}
@@ -301,7 +402,8 @@ export function CreateCharacterModal({ open, state, onClose, onCreate }: Props) 
                     const h = state.houses[c.houseId]
                     return (
                       <option key={c.id} value={c.id}>
-                        {c.avatar} {c.name} · {h?.name ?? '外族'}
+                        {c.name}
+                        {c.nickname ? `「${c.nickname}」` : ''} · {h?.name ?? '外族'}
                       </option>
                     )
                   })}

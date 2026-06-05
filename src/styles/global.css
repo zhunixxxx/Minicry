@@ -186,6 +186,21 @@ body {
   animation: slideUp 0.25s ease;
 }
 
+.create-char-modal {
+  width: min(720px, calc(100vw - 2rem));
+  max-height: min(92vh, 900px);
+}
+
+.create-char-modal .modal-body {
+  min-width: 0;
+}
+
+.create-char-modal .form-field input:not([type='checkbox']),
+.create-char-modal .form-field select,
+.create-char-modal .form-field textarea {
+  width: 100%;
+}
+
 @keyframes slideUp {
   from {
     opacity: 0;
@@ -274,6 +289,11 @@ body {
   gap: 0.65rem;
 }
 
+.form-grid--3 {
+  grid-template-columns: repeat(3, 1fr);
+  margin-bottom: 0.65rem;
+}
+
 .form-field {
   display: flex;
   flex-direction: column;
@@ -304,6 +324,22 @@ body {
   font-family: var(--font-body);
   font-size: 0.82rem;
   transition: border-color 0.15s;
+  box-sizing: border-box;
+}
+
+.form-field input:not([type='checkbox']),
+.form-field select {
+  height: 2.25rem;
+  line-height: 1.2;
+}
+
+.form-field select {
+  padding-right: 1.75rem;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%238a8278' d='M2.5 4.5 6 8l3.5-3.5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.55rem center;
+  cursor: pointer;
 }
 
 .form-field input:focus,
@@ -339,6 +375,10 @@ body {
   align-items: center;
 }
 
+.avatar-picker--generated {
+  gap: 0.5rem;
+}
+
 .avatar-option {
   width: 36px;
   height: 36px;
@@ -351,6 +391,89 @@ body {
   font-size: 1.2rem;
   cursor: pointer;
   transition: border-color 0.15s, background 0.15s;
+}
+
+.avatar-option--svg {
+  width: 52px;
+  height: 52px;
+  padding: 0.2rem;
+  overflow: hidden;
+}
+
+.avatar-option--svg .character-avatar-img {
+  border-radius: 6px;
+  display: block;
+}
+
+.form-hint-inline {
+  margin-left: 0.35rem;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  font-weight: normal;
+}
+
+.chip-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  max-height: 140px;
+  overflow-y: auto;
+  padding: 0.5rem;
+  background: var(--bg-deep);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.chip-option {
+  padding: 0.25rem 0.55rem;
+  font-size: 0.72rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
+}
+
+.chip-option:hover {
+  border-color: var(--border-light);
+  color: var(--text-primary);
+}
+
+.chip-option.selected {
+  border-color: var(--accent-gold);
+  background: rgba(201, 168, 76, 0.15);
+  color: var(--accent-gold);
+}
+
+.chip-trait.selected {
+  border-color: rgba(196, 125, 90, 0.6);
+  background: rgba(196, 125, 90, 0.12);
+  color: #d4a574;
+}
+
+.chip-pref.selected {
+  border-color: rgba(90, 140, 120, 0.6);
+  background: rgba(90, 140, 120, 0.12);
+  color: #8fbc8f;
+}
+
+.character-avatar-img {
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.character-avatar-emoji {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.character-nickname {
+  margin-left: 0.35rem;
+  font-size: 0.85em;
+  font-weight: normal;
+  color: var(--text-muted);
 }
 
 .avatar-option:hover {
@@ -394,7 +517,40 @@ body {
   cursor: pointer;
 }
 
-.checkbox-item input {
+.checkbox-item-avatar {
+  flex-shrink: 0;
+}
+
+.checkbox-item-avatar.character-avatar-img {
+  display: block;
+  border-radius: 4px;
+  object-fit: cover;
+}
+
+.checkbox-item-avatar.character-avatar-emoji {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+}
+
+.checkbox-item-text {
+  flex: 1;
+  min-width: 0;
+  line-height: 1.35;
+}
+
+.checkbox-item-meta {
+  color: var(--text-muted);
+  margin-left: 0.15rem;
+}
+
+.checkbox-item input[type='checkbox'] {
+  width: auto;
+  height: auto;
+  flex-shrink: 0;
+  margin: 0;
   accent-color: var(--accent-gold);
 }
 
@@ -757,6 +913,38 @@ body {
   padding: 0 0.5rem;
 }
 
+.tree-end-meeting-btn {
+  font-size: 0.68rem;
+  padding: 0 0.65rem;
+  border-color: rgba(201, 168, 76, 0.45);
+  color: var(--accent-gold);
+}
+
+.tree-end-meeting-btn:hover {
+  border-color: var(--accent-gold);
+  background: rgba(201, 168, 76, 0.12);
+}
+
+.tree-stage--meeting .panel-label {
+  color: var(--accent-gold);
+}
+
+.social-menu-meeting {
+  color: #7eb8da;
+  font-weight: 600;
+}
+
+.social-menu-meeting:hover {
+  background: rgba(126, 184, 218, 0.12);
+  color: #9ccae8;
+}
+
+.social-menu-divider {
+  height: 1px;
+  margin: 0.25rem 0.65rem;
+  background: var(--border);
+}
+
 .tree-zoom-label {
   font-size: 0.68rem;
   color: var(--text-muted);
@@ -779,6 +967,133 @@ body {
 
 .tree-viewport.is-dragging {
   cursor: grabbing;
+}
+
+/* ── 社交互动菜单 ── */
+.social-interaction-menu {
+  position: fixed;
+  z-index: 900;
+  width: 168px;
+  padding: 0.45rem 0;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-light);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  animation: fadeIn 0.15s ease;
+}
+
+.social-menu-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.35rem 0.75rem 0.25rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.social-menu-header-label {
+  font-family: var(--font-display);
+  font-size: 0.65rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.social-menu-header-target {
+  font-size: 0.78rem;
+  color: var(--accent-gold);
+  font-weight: 600;
+}
+
+.social-menu-actor {
+  margin: 0;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border);
+}
+
+.social-menu-actor strong {
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.social-menu-items {
+  display: flex;
+  flex-direction: column;
+  padding: 0.25rem 0;
+}
+
+.social-menu-body {
+  position: relative;
+}
+
+.social-menu-flyout {
+  position: absolute;
+  left: calc(100% + 4px);
+  min-width: 112px;
+  padding: 0.25rem 0;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-light);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  z-index: 1;
+}
+
+.social-menu-flyout--left {
+  left: auto;
+  right: calc(100% + 4px);
+}
+
+.social-menu-flyout-item {
+  justify-content: flex-start;
+}
+
+.social-menu-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.45rem 0.75rem;
+  background: transparent;
+  border: none;
+  text-align: left;
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+
+.social-menu-item:hover:not(.disabled) {
+  background: rgba(201, 168, 76, 0.1);
+  color: var(--accent-gold);
+}
+
+.social-menu-item.expanded {
+  background: rgba(201, 168, 76, 0.08);
+  color: var(--accent-gold);
+}
+
+.social-menu-item.disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.social-menu-item-label {
+  flex: 1;
+}
+
+.social-menu-item-arrow {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  transition: transform 0.15s;
+}
+
+.social-menu-item.expanded .social-menu-item-arrow {
+  transform: rotate(90deg);
+  color: var(--accent-gold);
 }
 
 .tree-svg {
@@ -859,8 +1174,9 @@ body {
 
 .tree-node-bg {
   fill: var(--bg-elevated);
+  stroke: var(--node-stroke, #666);
   stroke-width: 2;
-  transition: fill 0.2s, filter 0.2s;
+  transition: fill 0.2s, stroke 0.2s, filter 0.2s;
 }
 
 .tree-node-group:hover .tree-node-bg {
@@ -868,13 +1184,30 @@ body {
   filter: brightness(1.15);
 }
 
-.tree-node-bg.selected {
-  fill: rgba(201, 168, 76, 0.15);
-  filter: drop-shadow(0 0 8px rgba(201, 168, 76, 0.4));
+.tree-node-bg.protagonist {
+  stroke: #e8c87a;
+  stroke-width: 2.5;
 }
 
-.tree-node-bg.focused {
-  stroke-width: 2.5;
+.tree-node-bg.selected {
+  fill: rgba(201, 168, 76, 0.22);
+  stroke: #e8c87a;
+  stroke-width: 3;
+  filter: drop-shadow(0 0 10px rgba(201, 168, 76, 0.55));
+}
+
+.tree-node-bg.selected-highlight {
+  fill: rgba(126, 184, 218, 0.2);
+  stroke: #7eb8da;
+  stroke-width: 3;
+  filter: drop-shadow(0 0 10px rgba(126, 184, 218, 0.55));
+}
+
+.tree-node-bg.meeting-pick:not(.selected-highlight) {
+  fill: rgba(126, 184, 218, 0.14);
+  stroke: #7eb8da;
+  stroke-width: 3;
+  filter: drop-shadow(0 0 8px rgba(126, 184, 218, 0.45));
 }
 
 .tree-node-avatar {
@@ -1193,7 +1526,8 @@ body {
     margin-left: auto;
   }
 
-  .form-grid {
+  .form-grid,
+  .form-grid--3 {
     grid-template-columns: 1fr;
   }
 

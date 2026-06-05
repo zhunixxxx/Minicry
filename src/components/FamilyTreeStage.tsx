@@ -1,15 +1,27 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import type { Character, CharacterReactions, House } from '../types/game'
-import { getContentBounds, layoutFamilyTree } from '../utils/familyTree'
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
+import type { CharacterReactions, GameState, House, MeetingSession } from '../types/game'
+import type { InteractionActionId, InteractionContext, InteractionMenuAnchor } from '../types/interactions'
+import { getContentBounds, layoutFamilyTree, layoutMeetingTree } from '../utils/familyTree'
+import { computeInteractionTargets } from '../interactions/utils'
+import { avatarIdToDataUrl, isGeneratedAvatar } from '../utils/avatars'
 import { SpeechBubble } from './SpeechBubble'
+import { SocialInteractionMenu } from './SocialInteractionMenu'
 
 interface Props {
   focusCharacterId: string
   selectedCharacterId: string
-  characters: Record<string, Character>
+  state: GameState
   houses: Record<string, House>
   characterReactions: CharacterReactions
+  meetingSession: MeetingSession | null
   onSelect: (id: string) => void
+  onSelectProtagonist: (id: string) => void
+  onExecuteInteraction: (
+    actionId: InteractionActionId,
+    ctx: InteractionContext,
+  ) => void
+  onStartMeeting: (participantIds: string[]) => void
+  onEndMeeting: () => void
 }
 
 const NODE_W = 88
@@ -19,6 +31,13 @@ const MAX_ZOOM = 3
 const DRAG_THRESHOLD = 5
 const VIEW_PADDING = 56
 
+function isMultiSelectModifier(e: { metaKey: boolean; ctrlKey: boolean }): boolean {
+  const isMac =
+    typeof navigator !== 'undefined' &&
+    /Mac|iPhone|iPad|iPod/.test(navigator.platform)
+  return isMac ? e.metaKey : e.ctrlKey
+}
+
 interface Pan {
   x: number
   y: number
@@ -27,15 +46,25 @@ interface Pan {
 export function FamilyTreeStage({
   focusCharacterId,
   selectedCharacterId,
-  characters,
+  state,
   houses,
   characterReactions,
+  meetingSession,
   onSelect,
+  onSelectProtagonist,
+  onExecuteInteraction,
+  onStartMeeting,
+  onEndMeeting,
 }: Props) {
-  const layout = useMemo(
-    () => layoutFamilyTree(focusCharacterId, characters),
-    [focusCharacterId, characters],
-  )
+  const characters = state.characters
+  const isMeeting = meetingSession !== null
+
+  const layout = useMemo(() => {
+    if (meetingSession) {
+      return layoutMeetingTree(meetingSession.participantIds, characters)
+    }
+    return layoutFamilyTree(focusCharacterId, characters)
+  }, [meetingSession, focusCharacterId, characters])
 
   const nodeMap = useMemo(
     () => new Map(layout.nodes.map((n) => [n.id, n])),
@@ -45,6 +74,11 @@ export function FamilyTreeStage({
   const [pan, setPan] = useState<Pan>({ x: 0, y: 0 })
   const [zoom, setZoom] = useState(1)
   const [isDragging, setIsDragging] = useState(false)
+  const [interactionMenu, setInteractionMenu] = useState<InteractionMenuAnchor | null>(
+    null,
+  )
+  const [expandedCategoryId, setExpandedCategoryId] = useState<string | null>(null)
+  const [meetingSelection, setMeetingSelection] = useState<Set<string>>(new Set())
 
   const viewportRef = useRef<HTMLDivElement>(null)
   const svgRef = useRef<SVGSVGElement>(null)
@@ -57,6 +91,14 @@ export function FamilyTreeStage({
     startPanX: 0,
     startPanY: 0,
   })
+
+  useEffect(() => {
+    if (!isMeeting) setMeetingSelection(new Set())
+  }, [isMeeting])
+
+  useEffect(() => {
+    setMeetingSelection(new Set())
+  }, [selectedCharacterId])
 
   const clampPan = useCallback(
     (x: number, y: number, scale: number): Pan => {
@@ -96,7 +138,7 @@ export function FamilyTreeStage({
   useEffect(() => {
     const frame = requestAnimationFrame(() => centerView())
     return () => cancelAnimationFrame(frame)
-  }, [focusCharacterId, layout.width, layout.height, centerView])
+  }, [focusCharacterId, meetingSession, layout.width, layout.height, centerView])
 
   const viewBox = useMemo(() => {
     const viewW = layout.width / zoom
@@ -249,12 +291,104 @@ export function FamilyTreeStage({
     [],
   )
 
-  const handleNodeSelect = useCallback(
+  const handleSwitchProtagonist = useCallback(
     (id: string) => {
+      setInteractionMenu(null)
+      setExpandedCategoryId(null)
+      setMeetingSelection(new Set())
+      if (isMeeting) {
+        if (!meetingSession?.participantIds.includes(id)) return
+        onSelectProtagonist(id)
+        return
+      }
       onSelect(id)
     },
-    [onSelect],
+    [isMeeting, meetingSession, onSelect, onSelectProtagonist],
   )
+
+  const handleNodeContextMenu = useCallback(
+    (e: React.MouseEvent<SVGGElement>, nodeId: string) => {
+      e.preventDefault()
+      e.stopPropagation()
+      if (dragRef.current.didDrag) return
+      if (nodeId === selectedCharacterId) return
+      if (isMeeting && !meetingSession?.participantIds.includes(nodeId)) return
+
+      const { targetId, targetIds } = computeInteractionTargets(
+        nodeId,
+        selectedCharacterId,
+        meetingSelection,
+      )
+
+      const rect = e.currentTarget.getBoundingClientRect()
+      setExpandedCategoryId(null)
+      setInteractionMenu({
+        targetId,
+        targetIds,
+        x: rect.right + 6,
+        y: rect.top + 8,
+      })
+    },
+    [isMeeting, meetingSession, selectedCharacterId, meetingSelection],
+  )
+
+  const handleNodeClick = useCallback(
+    (e: React.MouseEvent<SVGGElement>, nodeId: string) => {
+      e.stopPropagation()
+      if (dragRef.current.didDrag) return
+
+      if (isMultiSelectModifier(e)) {
+        if (nodeId === selectedCharacterId) return
+        if (isMeeting && !meetingSession?.participantIds.includes(nodeId)) return
+        setMeetingSelection((prev) => {
+          const next = new Set(prev)
+          if (next.has(nodeId)) next.delete(nodeId)
+          else next.add(nodeId)
+          return next
+        })
+        return
+      }
+
+      handleSwitchProtagonist(nodeId)
+    },
+    [isMeeting, meetingSession, selectedCharacterId, handleSwitchProtagonist],
+  )
+
+  const closeInteractionMenu = useCallback(() => {
+    setInteractionMenu(null)
+    setExpandedCategoryId(null)
+  }, [])
+
+  const handleInviteMeeting = useCallback(() => {
+    if (!interactionMenu) return
+    const participantIds = [
+      selectedCharacterId,
+      ...meetingSelection,
+      interactionMenu.targetId,
+    ]
+    onStartMeeting([...new Set(participantIds)])
+    setMeetingSelection(new Set())
+    closeInteractionMenu()
+  }, [selectedCharacterId, meetingSelection, interactionMenu, onStartMeeting, closeInteractionMenu])
+
+  const handleInteractionExecute = useCallback(
+    (actionId: InteractionActionId, ctx: InteractionContext) => {
+      onExecuteInteraction(actionId, { ...ctx, inMeeting: isMeeting })
+      setMeetingSelection(new Set())
+      closeInteractionMenu()
+    },
+    [onExecuteInteraction, closeInteractionMenu, isMeeting],
+  )
+
+  const interactionActor = state.characters[selectedCharacterId]
+  const interactionTarget = interactionMenu
+    ? state.characters[interactionMenu.targetId]
+    : undefined
+  const meetingParticipantCount = useMemo(() => {
+    const ids = new Set([selectedCharacterId, ...meetingSelection])
+    if (interactionMenu?.targetId) ids.add(interactionMenu.targetId)
+    return ids.size
+  }, [selectedCharacterId, meetingSelection, interactionMenu?.targetId])
 
   const reactionBubbles = useMemo(() => {
     return layout.nodes
@@ -268,36 +402,27 @@ export function FamilyTreeStage({
   }, [layout.nodes, characterReactions])
 
   return (
-    <main className="panel tree-stage">
+    <main className={`panel tree-stage ${isMeeting ? 'tree-stage--meeting' : ''}`}>
       <header className="panel-header tree-header">
-        <span className="panel-label">家谱舞台</span>
+        <span className="panel-label">{isMeeting ? '会晤' : '家谱舞台'}</span>
         <div className="tree-header-actions">
-          <span className="tree-hint">点击节点查看人物 · 拖拽平移 · 滚轮缩放</span>
           <div className="tree-controls">
-            <button
-              type="button"
-              className="tree-control-btn"
-              title="缩小"
-              onClick={() => applyZoom(zoom / 1.2)}
-            >
-              −
-            </button>
-            <span className="tree-zoom-label">{Math.round(zoom * 100)}%</span>
-            <button
-              type="button"
-              className="tree-control-btn"
-              title="放大"
-              onClick={() => applyZoom(zoom * 1.2)}
-            >
-              +
-            </button>
+            {isMeeting && (
+              <button
+                type="button"
+                className="tree-control-btn tree-end-meeting-btn"
+                onClick={onEndMeeting}
+              >
+                结束见面
+              </button>
+            )}
             <button
               type="button"
               className="tree-control-btn tree-control-reset"
-              title="居中并重置"
+              title="重置视角"
               onClick={centerView}
             >
-              居中
+              重置视角
             </button>
           </div>
         </div>
@@ -310,6 +435,12 @@ export function FamilyTreeStage({
         onPointerMove={handlePointerMove}
         onPointerUp={endDrag}
         onPointerCancel={endDrag}
+        onContextMenu={(e) => {
+          if (!isNodeTarget(e.target)) {
+            e.preventDefault()
+            closeInteractionMenu()
+          }
+        }}
       >
         <svg
           ref={svgRef}
@@ -347,8 +478,8 @@ export function FamilyTreeStage({
 
           {layout.nodes.map((node) => {
             const house = houses[node.character.houseId]
-            const isSelected = node.id === selectedCharacterId
-            const isFocus = node.id === focusCharacterId
+            const isProtagonist = node.id === selectedCharacterId
+            const isMeetingPick = meetingSelection.has(node.id)
 
             return (
               <g
@@ -356,33 +487,46 @@ export function FamilyTreeStage({
                 className="tree-node-group"
                 transform={`translate(${node.x}, ${node.y})`}
                 onPointerDown={handleNodePointerDown}
-                onClick={(e) => {
-                  e.stopPropagation()
-                  handleNodeSelect(node.id)
-                }}
+                onClick={(e) => handleNodeClick(e, node.id)}
+                onContextMenu={(e) => handleNodeContextMenu(e, node.id)}
                 role="button"
                 tabIndex={0}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') handleNodeSelect(node.id)
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault()
+                    handleSwitchProtagonist(node.id)
+                  }
                 }}
               >
                 <rect
-                  className={`tree-node-bg ${isSelected ? 'selected' : ''} ${isFocus ? 'focused' : ''}`}
+                  className={`tree-node-bg ${isProtagonist ? 'selected' : ''} ${isMeetingPick ? 'meeting-pick' : ''}`}
                   width={NODE_W}
                   height={NODE_H}
                   rx={8}
-                  style={{
-                    stroke: isSelected ? '#e8c87a' : house?.color ?? '#666',
-                  }}
+                  style={
+                    {
+                      '--node-stroke': house?.color ?? '#666',
+                    } as CSSProperties
+                  }
                 />
-                <text
-                  className="tree-node-avatar"
-                  x={NODE_W / 2}
-                  y={36}
-                  textAnchor="middle"
-                >
-                  {node.character.avatar}
-                </text>
+                {isGeneratedAvatar(node.character.avatar) ? (
+                  <image
+                    href={avatarIdToDataUrl(node.character.avatar) ?? undefined}
+                    x={NODE_W / 2 - 14}
+                    y={22}
+                    width={28}
+                    height={28}
+                  />
+                ) : (
+                  <text
+                    className="tree-node-avatar"
+                    x={NODE_W / 2}
+                    y={36}
+                    textAnchor="middle"
+                  >
+                    {node.character.avatar}
+                  </text>
+                )}
                 <text
                   className="tree-node-name"
                   x={NODE_W / 2}
@@ -425,6 +569,25 @@ export function FamilyTreeStage({
             />
           ))}
         </svg>
+
+        {interactionMenu &&
+          interactionActor &&
+          interactionTarget &&
+          interactionMenu.targetId !== selectedCharacterId && (
+            <SocialInteractionMenu
+              anchor={interactionMenu}
+              state={state}
+              actor={interactionActor}
+              target={interactionTarget}
+              inMeeting={isMeeting}
+              meetingParticipantCount={meetingParticipantCount}
+              expandedCategoryId={expandedCategoryId}
+              onExpandCategory={setExpandedCategoryId}
+              onExecute={handleInteractionExecute}
+              onInviteMeeting={handleInviteMeeting}
+              onClose={closeInteractionMenu}
+            />
+          )}
       </div>
     </main>
   )
