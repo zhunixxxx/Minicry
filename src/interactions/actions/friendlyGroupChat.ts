@@ -1,6 +1,5 @@
 import type {
   InteractionActionHandler,
-  InteractionContext,
   InteractionResult,
 } from '../../types/interactions'
 import type { GameState } from '../../types/game'

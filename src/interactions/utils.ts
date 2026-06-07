@@ -1,5 +1,7 @@
 import type { InteractionContext } from '../types/interactions'
 import type { GameState } from '../types/game'
+import { isOppositeGender } from '../utils/gender'
+import { areCloseBloodRelatives } from '../utils/kinship'
 
 /** 互动目标 id 列表（不含发起者） */
 export function getInteractionTargets(ctx: InteractionContext): string[] {
@@ -52,4 +54,42 @@ export function friendlyInteractDisabledReason(
 ): string {
   if (canFriendlyInteract(ctx, state)) return '暂时无法执行'
   return '暂不支持跨家族友善互动'
+}
+
+/** 同族谱/会晤中，且非近亲、非多人目标时可发起浪漫互动 */
+export function canRomanticInteract(
+  ctx: InteractionContext,
+  state: GameState,
+): boolean {
+  if (isMultiTargetContext(ctx)) return false
+  if (!canFriendlyInteract(ctx, state)) return false
+  const actor = state.characters[ctx.actorId]
+  const target = state.characters[ctx.targetId]
+  if (!actor || !target) return false
+  if (ctx.actorId === ctx.targetId) return false
+  if (!isOppositeGender(actor, target)) return false
+  return !areCloseBloodRelatives(ctx.actorId, ctx.targetId, state.characters)
+}
+
+export function romanticInteractDisabledReason(
+  ctx: InteractionContext,
+  state: GameState,
+): string {
+  if (isMultiTargetContext(ctx)) return '浪漫互动仅支持单人目标'
+  if (!canFriendlyInteract(ctx, state)) return '暂不支持跨家族浪漫互动'
+  const actor = state.characters[ctx.actorId]
+  const target = state.characters[ctx.targetId]
+  if (actor && target && !isOppositeGender(actor, target)) {
+    return '浪漫互动仅限异性之间'
+  }
+  if (
+    areCloseBloodRelatives(
+      ctx.actorId,
+      ctx.targetId,
+      state.characters,
+    )
+  ) {
+    return '近亲之间不可发起浪漫互动'
+  }
+  return '暂时无法执行'
 }

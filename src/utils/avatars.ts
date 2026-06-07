@@ -65,8 +65,8 @@ function palette(gender: Gender, ageGroup: AgeGroup, variant: number): AvatarPal
   const skins = ['#f0d5be', '#ddb896', '#c68642']
   const hairMale = ['#2c1810', '#5c3d2e', '#1a1a2e']
   const hairFemale = ['#2c1810', '#8b5a3c', '#c9a66b']
-  const shirts = ['#4a5568', '#744210', '#2d3748']
-  const accents = ['#c9a84c', '#9b7653', '#718096']
+  const shirts = ['#54A0FF', '#FF9F43', '#46C650']
+  const accents = ['#46C650', '#FF6B9D', '#A29BFE']
 
   const hairBase = gender === 'male' ? hairMale : hairFemale
   let hair = hairBase[variant] ?? hairBase[0]
@@ -152,7 +152,7 @@ function buildAvatarSvg(gender: Gender, ageGroup: AgeGroup, variant: number): st
   const mouthCurveY = ageGroup === 'child' ? 10 : 9
 
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <rect width="64" height="64" rx="8" fill="#1a1814"/>
+  <rect width="64" height="64" rx="8" fill="#E8F5FA"/>
   <path d="M16 58 Q32 52 48 58 L48 64 L16 64Z" fill="${shirt}"/>
   <circle cx="${cx}" cy="${cy + 2}" r="${r}" fill="${skin}"/>
   ${hairLayer}

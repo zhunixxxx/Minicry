@@ -505,7 +505,7 @@ export function FamilyTreeStage({
                   rx={8}
                   style={
                     {
-                      '--node-stroke': house?.color ?? '#666',
+                      '--node-stroke': house?.color ?? '#A0B4C4',
                     } as CSSProperties
                   }
                 />

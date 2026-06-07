@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react'
 import { CharacterPanel } from './components/CharacterPanel'
+import { BornChildModal } from './components/BornChildModal'
 import { CreateCharacterModal } from './components/CreateCharacterModal'
 import { FamilyTreeStage } from './components/FamilyTreeStage'
 import { InterventionPanel } from './components/InterventionPanel'
@@ -14,6 +15,12 @@ import type {
   NarrativeEntry,
 } from './types/game'
 import { applyNewCharacter } from './utils/createCharacter'
+import {
+  applyReproduction,
+  prepareReproductionDraft,
+  type ReproductionConfirmInput,
+  type ReproductionDraft,
+} from './utils/reproduction'
 import {
   buildMeetingEndEntry,
   buildMeetingStartEntry,
@@ -52,6 +59,8 @@ export default function App() {
   const [isProcessing, setIsProcessing] = useState(false)
   const [activeReactions, setActiveReactions] = useState<CharacterReactions>({})
   const [createModalOpen, setCreateModalOpen] = useState(false)
+  const [reproductionDraft, setReproductionDraft] =
+    useState<ReproductionDraft | null>(null)
   const [meetingSession, setMeetingSession] = useState<MeetingSession | null>(null)
   const reactionTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined)
 
@@ -156,6 +165,12 @@ export default function App() {
 
   const handleExecuteInteraction = useCallback(
     (actionId: InteractionActionId, ctx: InteractionContext) => {
+      if (actionId === 'romantic.reproduce') {
+        const draft = prepareReproductionDraft(ctx, state)
+        if (draft) setReproductionDraft(draft)
+        return
+      }
+
       try {
         const result = executeInteraction(actionId, ctx, state)
         setState((prev) => ({
@@ -172,6 +187,21 @@ export default function App() {
       }
     },
     [state, showReactions],
+  )
+
+  const handleConfirmReproduction = useCallback(
+    (confirm: ReproductionConfirmInput) => {
+      if (!reproductionDraft) return
+      const result = applyReproduction(state, reproductionDraft, confirm)
+      setState((prev) => ({
+        ...prev,
+        ...result.state,
+        characters: { ...prev.characters, ...result.state.characters },
+        narrative: [...prev.narrative, result.entry],
+      }))
+      setReproductionDraft(null)
+    },
+    [reproductionDraft, state],
   )
 
   const applyIntervention = useCallback(
@@ -260,6 +290,13 @@ export default function App() {
         state={state}
         onClose={() => setCreateModalOpen(false)}
         onCreate={handleCreateCharacter}
+      />
+
+      <BornChildModal
+        open={reproductionDraft !== null}
+        draft={reproductionDraft}
+        state={state}
+        onConfirm={handleConfirmReproduction}
       />
 
       <div className="game-layout">

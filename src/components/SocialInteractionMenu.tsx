@@ -47,6 +47,7 @@ export function SocialInteractionMenu({
   const flyoutRef = useRef<HTMLDivElement>(null)
   const [flyoutTop, setFlyoutTop] = useState(0)
   const [flyoutFlip, setFlyoutFlip] = useState(false)
+  const [hoveredCategoryId, setHoveredCategoryId] = useState<string | null>(null)
 
   const ctx: InteractionContext = {
     actorId: actor.id,
@@ -56,8 +57,9 @@ export function SocialInteractionMenu({
   }
   const isMulti = isMultiTargetContext(ctx)
   const items = buildInteractionMenu(ctx, state)
-  const expandedCategory = items.find(
-    (item) => item.kind === 'category' && item.id === expandedCategoryId,
+  const visibleCategoryId = expandedCategoryId ?? hoveredCategoryId
+  const visibleCategory = items.find(
+    (item) => item.kind === 'category' && item.id === visibleCategoryId,
   )
 
   const targetLabel = isMulti
@@ -65,13 +67,17 @@ export function SocialInteractionMenu({
     : target.name
 
   useEffect(() => {
-    if (!expandedCategoryId) return
-    const btn = categoryRefs.current.get(expandedCategoryId)
+    if (!visibleCategoryId) return
+    const btn = categoryRefs.current.get(visibleCategoryId)
     const body = bodyRef.current
     if (btn && body) {
       setFlyoutTop(btn.offsetTop)
     }
-  }, [expandedCategoryId, items.length])
+  }, [visibleCategoryId, items.length])
+
+  useEffect(() => {
+    setHoveredCategoryId(null)
+  }, [anchor.targetId, anchor.targetIds?.join(',')])
 
   useEffect(() => {
     let listen = false
@@ -130,11 +136,49 @@ export function SocialInteractionMenu({
     } else {
       setFlyoutFlip(false)
     }
-  }, [anchor.x, anchor.y, expandedCategoryId, items.length, flyoutTop])
+  }, [anchor.x, anchor.y, visibleCategoryId, items.length, flyoutTop])
+
+  function handleCategoryMouseEnter(item: InteractionMenuItem) {
+    if (item.disabled || item.kind !== 'category') return
+    if (expandedCategoryId) return
+    setHoveredCategoryId(item.id)
+  }
+
+  function handleCategoryMouseLeave(
+    item: InteractionMenuItem,
+    e: React.MouseEvent<HTMLButtonElement>,
+  ) {
+    const related = e.relatedTarget
+    if (
+      related instanceof Node &&
+      flyoutRef.current?.contains(related) &&
+      visibleCategoryId === item.id
+    ) {
+      return
+    }
+    if (hoveredCategoryId === item.id) {
+      setHoveredCategoryId(null)
+    }
+  }
+
+  function handleFlyoutMouseLeave(e: React.MouseEvent<HTMLDivElement>) {
+    const related = e.relatedTarget
+    if (related instanceof Node) {
+      const btn = categoryRefs.current.get(visibleCategoryId ?? '')
+      if (btn?.contains(related)) return
+    }
+    setHoveredCategoryId(null)
+  }
 
   function handleCategoryClick(item: InteractionMenuItem) {
     if (item.disabled) return
-    onExpandCategory(expandedCategoryId === item.id ? null : item.id)
+    if (expandedCategoryId === item.id) {
+      onExpandCategory(null)
+      setHoveredCategoryId(item.id)
+      return
+    }
+    setHoveredCategoryId(null)
+    onExpandCategory(item.id)
   }
 
   function handleActionClick(item: InteractionMenuItem) {
@@ -153,6 +197,7 @@ export function SocialInteractionMenu({
       onPointerDown={stopMenuPointer}
       onMouseDown={stopMenuPointer}
       onClick={stopMenuPointer}
+      onMouseLeave={() => setHoveredCategoryId(null)}
     >
       <header className="social-menu-header">
         <span className="social-menu-header-label">
@@ -185,8 +230,10 @@ export function SocialInteractionMenu({
                 else categoryRefs.current.delete(item.id)
               }}
               type="button"
-              className={`social-menu-item ${item.disabled ? 'disabled' : ''} ${expandedCategoryId === item.id ? 'expanded' : ''}`}
+              className={`social-menu-item ${item.disabled ? 'disabled' : ''} ${visibleCategoryId === item.id ? 'expanded' : ''} ${expandedCategoryId === item.id ? 'locked' : ''}`}
               onClick={() => handleCategoryClick(item)}
+              onMouseEnter={() => handleCategoryMouseEnter(item)}
+              onMouseLeave={(e) => handleCategoryMouseLeave(item, e)}
               disabled={item.disabled}
               title={item.disabled ? item.disabledReason : undefined}
             >
@@ -199,14 +246,19 @@ export function SocialInteractionMenu({
             </button>
           ))}
         </div>
-        {expandedCategory?.children && expandedCategory.children.length > 0 && (
+        {visibleCategory?.children && visibleCategory.children.length > 0 && (
           <div
             ref={flyoutRef}
             className={`social-menu-flyout ${flyoutFlip ? 'social-menu-flyout--left' : ''}`}
             style={{ top: flyoutTop }}
             role="menu"
+            onMouseEnter={() => {
+              if (expandedCategoryId || !visibleCategoryId) return
+              setHoveredCategoryId(visibleCategoryId)
+            }}
+            onMouseLeave={handleFlyoutMouseLeave}
           >
-            {expandedCategory.children.map((child) => (
+            {visibleCategory.children.map((child) => (
               <button
                 key={child.id}
                 type="button"

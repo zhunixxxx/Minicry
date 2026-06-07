@@ -7,12 +7,16 @@ import type {
 import type { GameState } from '../types/game'
 import { friendlyGreetAction } from './actions/friendlyGreet'
 import { friendlyGroupChatAction } from './actions/friendlyGroupChat'
-import { canFriendlyInteract, isMultiTargetContext } from './utils'
+import { romanticFlirtAction } from './actions/romanticFlirt'
+import { romanticReproduceAction } from './actions/romanticReproduce'
+import { canFriendlyInteract, canRomanticInteract, isMultiTargetContext } from './utils'
 
 /** 所有已注册的可执行动作 */
 export const INTERACTION_ACTIONS: InteractionActionHandler[] = [
   friendlyGreetAction,
   friendlyGroupChatAction,
+  romanticFlirtAction,
+  romanticReproduceAction,
 ]
 
 const actionById = new Map<InteractionActionId, InteractionActionHandler>(
@@ -26,7 +30,7 @@ const actionById = new Map<InteractionActionId, InteractionActionHandler>(
 export const INTERACTION_MENU_ROOT: InteractionMenuItem[] = [
   {
     id: 'friendly',
-    label: '友善……',
+    label: '友善',
     kind: 'category',
     children: [
       {
@@ -42,6 +46,27 @@ export const INTERACTION_MENU_ROOT: InteractionMenuItem[] = [
         kind: 'action',
         actionId: 'friendly.groupChat',
         scope: 'multi',
+      },
+    ],
+  },
+  {
+    id: 'romantic',
+    label: '浪漫',
+    kind: 'category',
+    children: [
+      {
+        id: 'romantic-flirt',
+        label: '调情',
+        kind: 'action',
+        actionId: 'romantic.flirt',
+        scope: 'single',
+      },
+      {
+        id: 'romantic-reproduce',
+        label: '传宗接代',
+        kind: 'action',
+        actionId: 'romantic.reproduce',
+        scope: 'single',
       },
     ],
   },
@@ -109,10 +134,13 @@ export function buildInteractionMenu(
   state: GameState,
 ): InteractionMenuItem[] {
   const allowFriendly = canFriendlyInteract(ctx, state)
+  const allowRomantic = canRomanticInteract(ctx, state)
 
-  return INTERACTION_MENU_ROOT.filter(
-    (item) => allowFriendly || item.id !== 'friendly',
-  )
+  return INTERACTION_MENU_ROOT.filter((item) => {
+    if (item.id === 'friendly') return allowFriendly
+    if (item.id === 'romantic') return allowRomantic
+    return true
+  })
     .map((item) => resolveMenuItem(item, ctx, state))
     .filter((item): item is InteractionMenuItem => item !== null)
 }

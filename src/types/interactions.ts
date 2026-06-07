@@ -1,7 +1,12 @@
 import type { GameState, NarrativeEntry } from './game'
 
 /** 交互动作唯一标识，采用「分类.动作」命名便于扩展 */
-export type InteractionActionId = 'friendly.greet' | 'friendly.groupChat' | (string & {})
+export type InteractionActionId =
+  | 'friendly.greet'
+  | 'friendly.groupChat'
+  | 'romantic.flirt'
+  | 'romantic.reproduce'
+  | (string & {})
 
 export type InteractionScope = 'single' | 'multi'
 
