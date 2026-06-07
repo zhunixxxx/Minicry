@@ -1,7 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import type { CharacterReactions, GameState, House, MeetingSession } from '../types/game'
 import type { InteractionActionId, InteractionContext, InteractionMenuAnchor } from '../types/interactions'
-import { getContentBounds, layoutFamilyTree, layoutMeetingTree } from '../utils/familyTree'
+import {
+  getChildrenOf,
+  getContentBounds,
+  layoutFamilyTree,
+  layoutMeetingTree,
+} from '../utils/familyTree'
+import { OffTreeChildrenPopover } from './OffTreeChildrenPopover'
 import { computeInteractionTargets } from '../interactions/utils'
 import { avatarIdToDataUrl, isGeneratedAvatar } from '../utils/avatars'
 import { SpeechBubble } from './SpeechBubble'
@@ -9,6 +15,7 @@ import { SocialInteractionMenu } from './SocialInteractionMenu'
 
 interface Props {
   focusCharacterId: string
+  focusedHouseId: string
   selectedCharacterId: string
   state: GameState
   houses: Record<string, House>
@@ -16,6 +23,7 @@ interface Props {
   meetingSession: MeetingSession | null
   onSelect: (id: string) => void
   onSelectProtagonist: (id: string) => void
+  onFocusHouse: (houseId: string) => void
   onExecuteInteraction: (
     actionId: InteractionActionId,
     ctx: InteractionContext,
@@ -26,6 +34,10 @@ interface Props {
 
 const NODE_W = 88
 const NODE_H = 100
+const MORE_BTN_SIZE = 18
+/** 略超出节点右下角，营造悬浮叠放感 */
+const MORE_BTN_X = NODE_W - MORE_BTN_SIZE + 5
+const MORE_BTN_Y = NODE_H - MORE_BTN_SIZE + 5
 const MIN_ZOOM = 0.35
 const MAX_ZOOM = 3
 const DRAG_THRESHOLD = 5
@@ -43,8 +55,15 @@ interface Pan {
   y: number
 }
 
+interface OffTreeChildrenAnchor {
+  parentId: string
+  x: number
+  y: number
+}
+
 export function FamilyTreeStage({
   focusCharacterId,
+  focusedHouseId,
   selectedCharacterId,
   state,
   houses,
@@ -52,6 +71,7 @@ export function FamilyTreeStage({
   meetingSession,
   onSelect,
   onSelectProtagonist,
+  onFocusHouse,
   onExecuteInteraction,
   onStartMeeting,
   onEndMeeting,
@@ -63,8 +83,13 @@ export function FamilyTreeStage({
     if (meetingSession) {
       return layoutMeetingTree(meetingSession.participantIds, characters)
     }
-    return layoutFamilyTree(focusCharacterId, characters)
-  }, [meetingSession, focusCharacterId, characters])
+    return layoutFamilyTree(focusCharacterId, characters, focusedHouseId)
+  }, [meetingSession, focusCharacterId, focusedHouseId, characters])
+
+  const offTreeChildParentSet = useMemo(
+    () => new Set(layout.offTreeChildParentIds),
+    [layout.offTreeChildParentIds],
+  )
 
   const nodeMap = useMemo(
     () => new Map(layout.nodes.map((n) => [n.id, n])),
@@ -79,6 +104,8 @@ export function FamilyTreeStage({
   )
   const [expandedCategoryId, setExpandedCategoryId] = useState<string | null>(null)
   const [meetingSelection, setMeetingSelection] = useState<Set<string>>(new Set())
+  const [offTreeChildrenAnchor, setOffTreeChildrenAnchor] =
+    useState<OffTreeChildrenAnchor | null>(null)
 
   const viewportRef = useRef<HTMLDivElement>(null)
   const svgRef = useRef<SVGSVGElement>(null)
@@ -99,6 +126,10 @@ export function FamilyTreeStage({
   useEffect(() => {
     setMeetingSelection(new Set())
   }, [selectedCharacterId])
+
+  useEffect(() => {
+    setOffTreeChildrenAnchor(null)
+  }, [focusCharacterId, focusedHouseId, meetingSession])
 
   const clampPan = useCallback(
     (x: number, y: number, scale: number): Pan => {
@@ -359,6 +390,21 @@ export function FamilyTreeStage({
     setExpandedCategoryId(null)
   }, [])
 
+  const handleOffTreeChildrenClick = useCallback(
+    (e: React.MouseEvent<SVGGElement>, parentId: string) => {
+      e.preventDefault()
+      e.stopPropagation()
+      if (dragRef.current.didDrag) return
+      setOffTreeChildrenAnchor({
+        parentId,
+        x: e.clientX,
+        y: e.clientY,
+      })
+      closeInteractionMenu()
+    },
+    [closeInteractionMenu],
+  )
+
   const handleInviteMeeting = useCallback(() => {
     if (!interactionMenu) return
     const participantIds = [
@@ -379,6 +425,13 @@ export function FamilyTreeStage({
     },
     [onExecuteInteraction, closeInteractionMenu, isMeeting],
   )
+
+  const offTreeChildrenParent = offTreeChildrenAnchor
+    ? state.characters[offTreeChildrenAnchor.parentId]
+    : undefined
+  const offTreeChildren = offTreeChildrenParent
+    ? getChildrenOf(offTreeChildrenParent.id, characters)
+    : []
 
   const interactionActor = state.characters[selectedCharacterId]
   const interactionTarget = interactionMenu
@@ -480,6 +533,8 @@ export function FamilyTreeStage({
             const house = houses[node.character.houseId]
             const isProtagonist = node.id === selectedCharacterId
             const isMeetingPick = meetingSelection.has(node.id)
+            const showOffTreeBtn =
+              !isMeeting && offTreeChildParentSet.has(node.id)
 
             return (
               <g
@@ -555,6 +610,45 @@ export function FamilyTreeStage({
                     †
                   </text>
                 )}
+                {showOffTreeBtn && (
+                  <g
+                    className="tree-node-more-btn"
+                    transform={`translate(${MORE_BTN_X}, ${MORE_BTN_Y})`}
+                    onClick={(e) => handleOffTreeChildrenClick(e, node.id)}
+                    onPointerDown={(e) => e.stopPropagation()}
+                    role="button"
+                    tabIndex={0}
+                    aria-label={`查看${node.character.name}的子女`}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault()
+                        e.stopPropagation()
+                        const rect = e.currentTarget.getBoundingClientRect()
+                        setOffTreeChildrenAnchor({
+                          parentId: node.id,
+                          x: rect.right,
+                          y: rect.bottom,
+                        })
+                        closeInteractionMenu()
+                      }
+                    }}
+                  >
+                    <rect
+                      className="tree-node-more-bg"
+                      width={MORE_BTN_SIZE}
+                      height={MORE_BTN_SIZE}
+                      rx={4}
+                    />
+                    <text
+                      className="tree-node-more-label"
+                      x={MORE_BTN_SIZE / 2}
+                      y={MORE_BTN_SIZE / 2 + 4}
+                      textAnchor="middle"
+                    >
+                      …
+                    </text>
+                  </g>
+                )}
               </g>
             )
           })}
@@ -569,6 +663,22 @@ export function FamilyTreeStage({
             />
           ))}
         </svg>
+
+        {offTreeChildrenAnchor &&
+          offTreeChildrenParent &&
+          offTreeChildren.length > 0 && (
+            <OffTreeChildrenPopover
+              parent={offTreeChildrenParent}
+              children={offTreeChildren}
+              characters={characters}
+              houses={houses}
+              anchorX={offTreeChildrenAnchor.x}
+              anchorY={offTreeChildrenAnchor.y}
+              onSelectCharacter={onSelect}
+              onFocusHouse={onFocusHouse}
+              onClose={() => setOffTreeChildrenAnchor(null)}
+            />
+          )}
 
         {interactionMenu &&
           interactionActor &&

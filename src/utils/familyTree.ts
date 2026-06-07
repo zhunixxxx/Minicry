@@ -19,6 +19,50 @@ export interface TreeLayout {
   edges: TreeEdge[]
   width: number
   height: number
+  /** 当前家族视图中，有他族入籍子女、需显示 … 的父/母节点 */
+  offTreeChildParentIds: string[]
+}
+
+/** 家谱舞台仅展示入籍本族的成员，不含他族配偶或他族入籍子女 */
+function filterMembersForHouseView(
+  memberIds: Set<string>,
+  characters: Record<string, Character>,
+  focusedHouseId: string,
+): Set<string> {
+  const visible = new Set<string>()
+
+  for (const id of memberIds) {
+    const char = characters[id]
+    if (!char || char.houseId !== focusedHouseId) continue
+    visible.add(id)
+  }
+
+  return visible
+}
+
+function getOffTreeChildParentIds(
+  visibleIds: Set<string>,
+  characters: Record<string, Character>,
+  focusedHouseId: string,
+): string[] {
+  const result: string[] = []
+
+  for (const id of visibleIds) {
+    const hasOffTreeChild = Object.values(characters).some(
+      (child) =>
+        child.parentIds.includes(id) && child.houseId !== focusedHouseId,
+    )
+    if (hasOffTreeChild) result.push(id)
+  }
+
+  return result
+}
+
+export function getChildrenOf(
+  parentId: string,
+  characters: Record<string, Character>,
+): Character[] {
+  return Object.values(characters).filter((c) => c.parentIds.includes(parentId))
 }
 
 export interface ContentBounds {
@@ -134,13 +178,20 @@ function buildFamilyUnits(
 export function layoutFamilyTree(
   focusCharacterId: string,
   characters: Record<string, Character>,
+  focusedHouseId?: string,
 ): TreeLayout {
   const members = collectFamilyMembers(focusCharacterId, characters)
+  const visibleMembers = focusedHouseId
+    ? filterMembersForHouseView(members, characters, focusedHouseId)
+    : members
+  const offTreeChildParentIds = focusedHouseId
+    ? getOffTreeChildParentIds(visibleMembers, characters, focusedHouseId)
+    : []
   const genCache = new Map<string, number>()
 
   const byGeneration = new Map<number, string[][]>()
 
-  const units = buildFamilyUnits(members, characters)
+  const units = buildFamilyUnits(visibleMembers, characters)
   for (const unit of units) {
     const gen = Math.max(...unit.map((id) => getGeneration(id, characters, genCache)))
     if (!byGeneration.has(gen)) byGeneration.set(gen, [])
@@ -189,9 +240,9 @@ export function layoutFamilyTree(
   })
 
   for (const char of Object.values(characters)) {
-    if (!members.has(char.id)) continue
+    if (!visibleMembers.has(char.id)) continue
     for (const parentId of char.parentIds) {
-      if (members.has(parentId)) {
+      if (visibleMembers.has(parentId)) {
         edges.push({ from: parentId, to: char.id, type: 'parent' })
       }
     }
@@ -200,7 +251,13 @@ export function layoutFamilyTree(
   const height =
     generations.length * (NODE_HEIGHT + V_GAP) + 40
 
-  return { nodes, edges, width: Math.max(maxWidth, 600), height }
+  return {
+    nodes,
+    edges,
+    width: Math.max(maxWidth, 600),
+    height,
+    offTreeChildParentIds,
+  }
 }
 
 function collectMeetingEdges(
@@ -360,7 +417,13 @@ export function layoutMeetingTree(
   )
 
   if (participants.size === 0) {
-    return { nodes: [], edges: [], width: 600, height: 400 }
+    return {
+      nodes: [],
+      edges: [],
+      width: 600,
+      height: 400,
+      offTreeChildParentIds: [],
+    }
   }
 
   const relationEdges = collectMeetingEdges(participants, characters)
@@ -391,6 +454,7 @@ export function layoutMeetingTree(
     edges: allEdges,
     width: Math.max(xOffset, 600),
     height: maxHeight,
+    offTreeChildParentIds: [],
   }
 }
 

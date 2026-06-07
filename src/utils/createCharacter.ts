@@ -6,11 +6,15 @@ import type {
   Relation,
 } from '../types/game'
 
-let charCounter = 0
-
-function nextCharId(): string {
-  charCounter += 1
-  return `char-new-${charCounter}`
+function nextCharId(characters: Record<string, Character>): string {
+  const prefix = 'char-new-'
+  let max = 0
+  for (const id of Object.keys(characters)) {
+    if (!id.startsWith(prefix)) continue
+    const n = parseInt(id.slice(prefix.length), 10)
+    if (!Number.isNaN(n) && n > max) max = n
+  }
+  return `${prefix}${max + 1}`
 }
 
 function parseList(text: string): string[] {
@@ -54,8 +58,11 @@ export function formatCharacterName(
   return given || sur
 }
 
-export function buildCharacterFromInput(input: CreateCharacterInput): Character {
-  const id = nextCharId()
+export function buildCharacterFromInput(
+  input: CreateCharacterInput,
+  existingCharacters: Record<string, Character>,
+): Character {
+  const id = nextCharId(existingCharacters)
   const relations: Relation[] = []
   const givenName = input.givenName.trim()
   const surname = input.surname.trim()
@@ -95,7 +102,7 @@ export function applyNewCharacter(
   state: GameState,
   input: CreateCharacterInput,
 ): { state: Partial<GameState>; entry: NarrativeEntry } {
-  const character = buildCharacterFromInput(input)
+  const character = buildCharacterFromInput(input, state.characters)
   const updatedCharacters: Record<string, Character> = {
     ...state.characters,
     [character.id]: character,

@@ -5,7 +5,6 @@ import { CreateCharacterModal } from './components/CreateCharacterModal'
 import { FamilyTreeStage } from './components/FamilyTreeStage'
 import { InterventionPanel } from './components/InterventionPanel'
 import { NarrativePanel } from './components/NarrativePanel'
-import { initialGameState } from './data/initialState'
 import type {
   CharacterReactions,
   CreateCharacterInput,
@@ -15,6 +14,7 @@ import type {
   NarrativeEntry,
 } from './types/game'
 import { applyNewCharacter } from './utils/createCharacter'
+import { getInitialGameState, saveGameState } from './utils/gameStorage'
 import {
   applyReproduction,
   prepareReproductionDraft,
@@ -55,7 +55,7 @@ function findLatestReactiveEntry(
 }
 
 export default function App() {
-  const [state, setState] = useState<GameState>(initialGameState)
+  const [state, setState] = useState<GameState>(getInitialGameState)
   const [isProcessing, setIsProcessing] = useState(false)
   const [activeReactions, setActiveReactions] = useState<CharacterReactions>({})
   const [createModalOpen, setCreateModalOpen] = useState(false)
@@ -80,7 +80,11 @@ export default function App() {
   }, [])
 
   useEffect(() => {
-    const latest = findLatestReactiveEntry(initialGameState.narrative)
+    saveGameState(state)
+  }, [state])
+
+  useEffect(() => {
+    const latest = findLatestReactiveEntry(state.narrative)
     if (latest?.reactions) showReactions(latest.reactions)
     return () => {
       if (reactionTimerRef.current) clearTimeout(reactionTimerRef.current)
@@ -309,6 +313,7 @@ export default function App() {
 
         <FamilyTreeStage
           focusCharacterId={state.treeFocusCharacterId}
+          focusedHouseId={state.focusedHouseId}
           selectedCharacterId={state.selectedCharacterId}
           state={state}
           houses={state.houses}
@@ -316,6 +321,7 @@ export default function App() {
           meetingSession={meetingSession}
           onSelect={handleSelectCharacter}
           onSelectProtagonist={handleSelectProtagonist}
+          onFocusHouse={handleFocusHouse}
           onExecuteInteraction={handleExecuteInteraction}
           onStartMeeting={handleStartMeeting}
           onEndMeeting={handleEndMeeting}

@@ -1,4 +1,10 @@
 import type { Character, GameState, NarrativeEntry } from '../types/game'
+import {
+  getAgeGroup,
+  isGeneratedAvatar,
+  makeAvatarId,
+  parseAvatarId,
+} from './avatars'
 import { enrichNarrativeEntry } from './eventReactions'
 import { formatDate } from './familyTree'
 
@@ -8,14 +14,34 @@ function nextId(): string {
   return `n-${++entryCounter}`
 }
 
-function advanceMonth(state: GameState): { year: number; month: number } {
-  let { year, month } = state
-  month += 1
-  if (month > 12) {
-    month = 1
-    year += 1
+function advanceYear(state: GameState): { year: number; month: number } {
+  return { year: state.year + 1, month: state.month }
+}
+
+function ageCharacter(char: Character): Character {
+  const newAge = char.age + 1
+  let { avatar } = char
+
+  if (isGeneratedAvatar(avatar)) {
+    const parsed = parseAvatarId(avatar)
+    if (parsed && getAgeGroup(char.age) !== getAgeGroup(newAge)) {
+      avatar = makeAvatarId(parsed.gender, getAgeGroup(newAge), parsed.variant)
+    }
   }
-  return { year, month }
+
+  return { ...char, age: newAge, avatar }
+}
+
+function ageAliveCharacters(
+  characters: Record<string, Character>,
+): Record<string, Character> {
+  const updated: Record<string, Character> = {}
+  for (const [id, char] of Object.entries(characters)) {
+    if (char.isAlive) {
+      updated[id] = ageCharacter(char)
+    }
+  }
+  return updated
 }
 
 function pickRandom<T>(arr: T[]): T {
@@ -54,9 +80,10 @@ export function interveneAdvanceTime(state: GameState): {
   state: Partial<GameState>
   entry: NarrativeEntry
 } {
-  const { year, month } = advanceMonth(state)
+  const { year, month } = advanceYear(state)
+  const characters = ageAliveCharacters(state.characters)
   const entry = generateAmbientEvent(state, year, month)
-  return { state: { year, month }, entry }
+  return { state: { year, month, characters }, entry }
 }
 
 export function interveneBoostDiplomacy(

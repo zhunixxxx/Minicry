@@ -23,6 +23,7 @@ export interface ReproductionDraft {
   motherId: string
   childGender: Gender
   inheritedTraits: string[]
+  fatherSurname: string
   motherSurname: string
   fatherHouseId: string
   motherHouseId: string
@@ -133,12 +134,22 @@ export function prepareReproductionDraft(
     motherId: mother.id,
     childGender,
     inheritedTraits: inheritTraits(father, mother),
+    fatherSurname: getCharacterSurname(father),
     motherSurname: getCharacterSurname(mother),
     fatherHouseId: father.houseId,
     motherHouseId: mother.houseId,
     fatherName: father.name,
     motherName: mother.name,
   }
+}
+
+export function surnameForHouse(
+  draft: ReproductionDraft,
+  houseId: string,
+): string {
+  if (houseId === draft.fatherHouseId) return draft.fatherSurname
+  if (houseId === draft.motherHouseId) return draft.motherSurname
+  return ''
 }
 
 export interface ReproductionConfirmInput {

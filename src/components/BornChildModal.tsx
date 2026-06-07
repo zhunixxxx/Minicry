@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
 import type { GameState } from '../types/game'
-import type {
-  ReproductionConfirmInput,
-  ReproductionDraft,
+import {
+  surnameForHouse,
+  type ReproductionConfirmInput,
+  type ReproductionDraft,
 } from '../utils/reproduction'
 
 interface Props {
@@ -27,9 +28,10 @@ export function BornChildModal({
 
   useEffect(() => {
     if (!open || !draft) return
+    const defaultHouseId = draft.motherHouseId
     setGivenName('')
-    setSurname(draft.motherSurname)
-    setHouseId(draft.motherHouseId)
+    setHouseId(defaultHouseId)
+    setSurname(surnameForHouse(draft, defaultHouseId))
     setError('')
   }, [open, draft])
 
@@ -131,7 +133,10 @@ export function BornChildModal({
                       name="houseId"
                       value={draft.fatherHouseId}
                       checked={houseId === draft.fatherHouseId}
-                      onChange={() => setHouseId(draft.fatherHouseId)}
+                      onChange={() => {
+                        setHouseId(draft.fatherHouseId)
+                        setSurname(surnameForHouse(draft, draft.fatherHouseId))
+                      }}
                     />
                     <span className="house-choice-text">
                       <span className="house-choice-name">
@@ -148,7 +153,10 @@ export function BornChildModal({
                       name="houseId"
                       value={draft.motherHouseId}
                       checked={houseId === draft.motherHouseId}
-                      onChange={() => setHouseId(draft.motherHouseId)}
+                      onChange={() => {
+                        setHouseId(draft.motherHouseId)
+                        setSurname(surnameForHouse(draft, draft.motherHouseId))
+                      }}
                     />
                     <span className="house-choice-text">
                       <span className="house-choice-name">
