@@ -113,8 +113,8 @@ export function proposeDisabledReason(
   if (!canRomanticInteract(ctx, state)) {
     return romanticInteractDisabledReason(ctx, state)
   }
-  if (!actor.isAlive) return '发起者已不在世'
-  if (!target.isAlive) return '目标已不在世'
+  if (!actor.isAlive) return '发起者已故'
+  if (!target.isAlive) return '目标已故'
   if (hasSpouse(actor) || hasSpouse(target)) return '一方已有配偶'
   if (isEngagedTo(ctx.actorId, ctx.targetId, state.characters)) {
     return '双方已订婚'
@@ -152,8 +152,8 @@ export function marryDisabledReason(
   if (!canRomanticInteract(ctx, state)) {
     return romanticInteractDisabledReason(ctx, state)
   }
-  if (!actor.isAlive) return '发起者已不在世'
-  if (!target.isAlive) return '目标已不在世'
+  if (!actor.isAlive) return '发起者已故'
+  if (!target.isAlive) return '目标已故'
   if (hasSpouse(actor) || hasSpouse(target)) return '一方已有配偶'
   if (!isEngagedTo(ctx.actorId, ctx.targetId, state.characters)) {
     return '须先与对方订婚'
@@ -170,9 +170,14 @@ function nextProposeId(): string {
 
 function buildProposeNarrative(actorName: string, targetName: string): string {
   const templates = [
-    `【婚姻】${actorName}郑重向${targetName}求婚，${targetName}应允此事，二人遂定婚约。`,
-    `【婚姻】${actorName}单膝跪地，将心意托付于${targetName}。对方颔首应允，婚约既成。`,
-    `【婚姻】${actorName}与${targetName}在众人见证下互许终身，正式订立婚约。`,
+    `【婚姻】${actorName}郑重向${targetName}求婚，${targetName}答应了，二人正式订婚。`,
+    `【婚姻】${actorName}单膝跪地，向${targetName}递出戒指。对方点头应允，婚约成立。`,
+    `【婚姻】${actorName}与${targetName}在亲友见证下互许终身，正式订立婚约。`,
+    `【婚姻】${actorName}在私密场合向${targetName}求婚，${targetName}含泪应允，消息很快传开。`,
+    `【婚姻】${actorName}将戒指递给${targetName}，问出那句期待已久的话。${targetName}伸手接过，二人订婚。`,
+    `【婚姻】${actorName}与${targetName}在晚宴后单独相处，${actorName}正式提出婚约，${targetName}欣然答应。`,
+    `【婚姻】${actorName}向${targetName}坦陈心意，请求携手共度余生。${targetName}沉默片刻，随后点头应允。`,
+    `【婚姻】${actorName}与${targetName}在花园散步时，${actorName}突然停下脚步求婚。${targetName}答允，婚约既成。`,
   ]
   return templates[Math.floor(Math.random() * templates.length)]
 }
@@ -363,6 +368,27 @@ function nextMarryId(): string {
   return `n-marriage-marry-${marryCounter}`
 }
 
+function buildMarryNarrative(
+  actorName: string,
+  targetName: string,
+  houseName: string,
+  joinText: string,
+  childrenText: string,
+): string {
+  const suffix = `${joinText}${childrenText}`
+  const templates = [
+    `【婚姻】${actorName}与${targetName}在${houseName}举行婚礼，正式完婚${suffix}。`,
+    `【婚姻】${actorName}与${targetName}在${houseName}完成婚礼仪式，亲友见证，正式成为夫妻${suffix}。`,
+    `【婚姻】${houseName}为${actorName}与${targetName}举办婚礼，二人交换誓言，正式完婚${suffix}。`,
+    `【婚姻】${actorName}与${targetName}在${houseName}的婚礼圆满礼成，媒体争相报道${suffix}。`,
+    `【婚姻】${actorName}与${targetName}在${houseName}步入婚礼殿堂，在众人祝福中完婚${suffix}。`,
+    `【婚姻】${houseName}张灯结彩，${actorName}与${targetName}在此举行婚礼，正式结为夫妻${suffix}。`,
+    `【婚姻】${actorName}与${targetName}在${houseName}交换戒指，婚礼礼成${suffix}。`,
+    `【婚姻】${actorName}与${targetName}在${houseName}举办婚礼，仪式庄重而温馨，二人正式完婚${suffix}。`,
+  ]
+  return templates[Math.floor(Math.random() * templates.length)]
+}
+
 export function applyMarriage(
   state: GameState,
   draft: MarriageDraft,
@@ -469,13 +495,13 @@ export function applyMarriage(
   updatedCharacters[draft.targetId] = updatedTarget
 
   const moverName = getMarriageMoverName(draft, confirm.houseId)
-  const joinText = crossHouse ? `，${moverName}入籍${house.name}` : ''
+  const joinText = crossHouse ? `，${moverName}加入${house.name}` : ''
   const broughtNames = bringChildIds
     .map((id) => updatedCharacters[id]?.name)
     .filter(Boolean) as string[]
   const childrenText =
     broughtNames.length > 0
-      ? `，${broughtNames.join('、')}随${moverName}一同入籍`
+      ? `，${broughtNames.join('、')}随${moverName}一同加入`
       : ''
 
   return {
@@ -486,7 +512,13 @@ export function applyMarriage(
       year: state.year,
       month: state.month,
       type: 'player',
-      text: `【婚姻】${draft.actorName}与${draft.targetName}在${house.name}举行婚礼，结为连理${joinText}${childrenText}。`,
+      text: buildMarryNarrative(
+        draft.actorName,
+        draft.targetName,
+        house.name,
+        joinText,
+        childrenText,
+      ),
       characterIds: [draft.actorId, draft.targetId, ...bringChildIds],
     },
   }
@@ -547,8 +579,8 @@ export function divorceDisabledReason(
   if (!canMarriageInteract(ctx, state)) {
     return marriageInteractDisabledReason(ctx, state)
   }
-  if (!actor.isAlive) return '发起者已不在世'
-  if (!target.isAlive) return '目标已不在世'
+  if (!actor.isAlive) return '发起者已故'
+  if (!target.isAlive) return '目标已故'
   if (!isMarriedTo(ctx.actorId, ctx.targetId, state.characters)) {
     return '双方并非配偶'
   }
@@ -660,10 +692,28 @@ function buildDivorceNarrative(
   sharedText: string,
   returnText: string,
 ): string {
-  const base =
-    kind === 'amicable'
-      ? `【婚姻】${actorName}与${targetName}协议离婚，二人自此分道扬镳，仍愿以朋友相待。`
-      : `【婚姻】${actorName}与${targetName}对簿公堂，终以判决离婚收场，彼此结怨，视同仇人。`
+  const amicableBases = [
+    `【婚姻】${actorName}与${targetName}协议离婚，二人自此各奔东西，仍愿保持友好。`,
+    `【婚姻】${actorName}与${targetName}经协商一致，和平解除婚姻，彼此祝福。`,
+    `【婚姻】${actorName}与${targetName}签署离婚协议，体面分手，仍保留私人情谊。`,
+    `【婚姻】${actorName}与${targetName}在律师见证下协议离婚，过程平和，无公开冲突。`,
+    `【婚姻】${actorName}与${targetName}决定结束婚姻，双方声明仍将保持友好关系。`,
+    `【婚姻】${actorName}与${targetName}平静办理离婚手续，对外表示「仍是朋友」。`,
+    `【婚姻】${actorName}与${targetName}协商离婚，手续顺利，未引发舆论风波。`,
+    `【婚姻】${actorName}与${targetName}正式解除婚约，二人表示互不埋怨，好聚好散。`,
+  ]
+  const legalBases = [
+    `【婚姻】${actorName}与${targetName}走上法庭，最终以判决离婚收场，彼此形同陌路。`,
+    `【婚姻】${actorName}与${targetName}对簿公堂，经法院判决离婚，二人公开交恶。`,
+    `【婚姻】${actorName}与${targetName}的法律离婚历时数月，最终以法庭判决告终，关系彻底破裂。`,
+    `【婚姻】${actorName}与${targetName}因离婚对簿公堂，媒体全程跟踪，二人此后形同陌路。`,
+    `【婚姻】${actorName}与${targetName}经法院判决离婚，双方律师各执一词，场面颇为难看。`,
+    `【婚姻】${actorName}与${targetName}的离婚官司尘埃落定，判决结果公开，二人再未同框。`,
+    `【婚姻】${actorName}与${targetName}走上法庭争夺权益，最终以判决离婚收场，彼此不再往来。`,
+    `【婚姻】${actorName}与${targetName}经法院裁定离婚，声明中措辞冰冷，关系彻底终结。`,
+  ]
+  const bases = kind === 'amicable' ? amicableBases : legalBases
+  const base = bases[Math.floor(Math.random() * bases.length)]
   return `${base}${returnText}${preMaritalText}${sharedText}`
 }
 
@@ -681,7 +731,7 @@ export function applyDivorce(
   const postRelation =
     draft.kind === 'amicable'
       ? ({ type: 'ally' as const, label: '朋友' })
-      : ({ type: 'rival' as const, label: '仇人' })
+      : ({ type: 'rival' as const, label: '对立者' })
 
   const updatedCharacters: Record<string, Character> = { ...state.characters }
 
@@ -762,7 +812,7 @@ export function applyDivorce(
 
   const returnText =
     returnNames.length > 0
-      ? `${returnNames.join('、')}回归原籍。`
+      ? `${returnNames.join('、')}回归原家族。`
       : ''
   const preMaritalText =
     preMaritalNames.length > 0

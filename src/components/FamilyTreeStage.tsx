@@ -457,7 +457,7 @@ export function FamilyTreeStage({
   return (
     <main className={`panel tree-stage ${isMeeting ? 'tree-stage--meeting' : ''}`}>
       <header className="panel-header tree-header">
-        <span className="panel-label">{isMeeting ? '会晤' : '家谱舞台'}</span>
+        <span className="panel-label">{isMeeting ? '会面' : '谱系视图'}</span>
         <div className="tree-header-actions">
           <div className="tree-controls">
             {isMeeting && (
@@ -466,7 +466,7 @@ export function FamilyTreeStage({
                 className="tree-control-btn tree-end-meeting-btn"
                 onClick={onEndMeeting}
               >
-                结束见面
+                结束会面
               </button>
             )}
             <button

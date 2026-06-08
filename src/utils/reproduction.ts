@@ -98,12 +98,12 @@ export function reproduceDisabledReason(
   const target = state.characters[ctx.targetId]
   if (!actor || !target) return '角色不存在'
   if (ctx.actorId === ctx.targetId) return '无法对自己发起互动'
-  if (!isOppositeGender(actor, target)) return '传宗接代仅限异性伴侣'
+  if (!isOppositeGender(actor, target)) return '生育仅限异性伴侣'
   if (!isRomanticPartner(ctx.actorId, ctx.targetId, state.characters)) {
     return '双方须为恋人或配偶'
   }
-  if (!actor.isAlive) return '发起者已不在世'
-  if (!target.isAlive) return '目标已不在世'
+  if (!actor.isAlive) return '发起者已故'
+  if (!target.isAlive) return '目标已故'
   if (getAgeGroup(actor.age) === 'child' || getAgeGroup(target.age) === 'child') {
     return '年幼者无法生育'
   }
@@ -194,8 +194,22 @@ export function applyReproduction(
   )
   const house = state.houses[input.houseId]
   const childName = formatCharacterName(input.givenName, input.surname)
+  const childLabel = input.gender === 'male' ? '儿子' : '女儿'
   const traitText =
     input.traits.length > 0 ? `继承了${input.traits.join('、')}。` : ''
+  const houseName = house?.name ?? '家族'
+
+  const templates = [
+    `【浪漫】${childName}出生了，是${draft.fatherName}与${draft.motherName}的${childLabel}，登记加入${houseName}。${traitText}`,
+    `【浪漫】${draft.fatherName}与${draft.motherName}迎来新生儿${childName}，已在${houseName}完成登记。${traitText}`,
+    `【浪漫】${childName}降生，${draft.fatherName}与${draft.motherName}正式成为父母，孩子加入${houseName}。${traitText}`,
+    `【浪漫】${houseName}再添新成员：${childName}，为${draft.fatherName}与${draft.motherName}之${childLabel}。${traitText}`,
+    `【浪漫】${draft.fatherName}与${draft.motherName}喜获${childLabel}${childName}，家族档案已更新。${traitText}`,
+    `【浪漫】新生儿${childName}出生，${draft.fatherName}与${draft.motherName}难掩喜悦，孩子登记加入${houseName}。${traitText}`,
+    `【浪漫】${childName}来到世间，${draft.fatherName}与${draft.motherName}的${childLabel}已在${houseName}入档。${traitText}`,
+    `【浪漫】${draft.fatherName}与${draft.motherName}宣布${childName}出生，${houseName}迎来新一代成员。${traitText}`,
+  ]
+  const text = templates[Math.floor(Math.random() * templates.length)]
 
   return {
     state: result.state,
@@ -204,7 +218,7 @@ export function applyReproduction(
       year: state.year,
       month: state.month,
       type: 'player',
-      text: `【浪漫】${childName}降生人世，为${draft.fatherName}与${draft.motherName}之${input.gender === 'male' ? '子' : '女'}，入籍${house?.name ?? '家族'}。${traitText}`,
+      text,
       characterIds: result.entry.characterIds,
     },
   }

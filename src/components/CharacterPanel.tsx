@@ -6,18 +6,18 @@ import { getRelationLabel } from '../utils/familyTree'
 import { linkifyCharacterNames } from '../utils/linkifyNames'
 
 interface Props {
-  character: Character
-  house: House
+  character?: Character
+  house?: House
   characters: Record<string, Character>
   onSelectCharacter: (id: string) => void
 }
 
 const ATTR_LABELS: Record<string, string> = {
-  diplomacy: '外交',
-  martial: '军事',
-  stewardship: '管理',
-  intrigue: '谋略',
-  learning: '学识',
+  diplomacy: '公关',
+  martial: '行动',
+  stewardship: '统筹',
+  intrigue: '策略',
+  learning: '学养',
 }
 
 const GENDER_LABEL: Record<string, string> = {
@@ -34,8 +34,24 @@ export function CharacterPanel({
   const panelRef = useRef<HTMLElement>(null)
 
   useEffect(() => {
+    if (!character) return
     panelRef.current?.scrollTo({ top: 0, behavior: 'smooth' })
-  }, [character.id])
+  }, [character?.id])
+
+  if (!character || !house) {
+    return (
+      <aside className="panel character-panel" ref={panelRef}>
+        <header className="panel-header">
+          <span className="panel-label">人物档案</span>
+        </header>
+        <div className="panel-empty">
+          <p className="panel-empty-icon" aria-hidden="true">📋</p>
+          <p className="panel-empty-title">暂无人物</p>
+          <p className="panel-empty-desc">创建人物后，档案将显示在此处。</p>
+        </div>
+      </aside>
+    )
+  }
 
   const events = character.relations.filter(
     (r) =>
@@ -70,7 +86,7 @@ export function CharacterPanel({
           </h2>
           <p className="character-title">{character.title}</p>
           <p className="character-house" style={{ color: house.color }}>
-            {house.name} · {house.motto}
+            {house.motto}
           </p>
         </div>
       </div>
@@ -90,7 +106,7 @@ export function CharacterPanel({
       </section>
 
       <section className="info-section">
-        <h3>人物属性</h3>
+        <h3>能力</h3>
         <div className="attr-bars">
           {Object.entries(character.attributes).map(([key, value]) => (
             <div key={key} className="attr-row">
@@ -111,7 +127,7 @@ export function CharacterPanel({
       </section>
 
       <section className="info-section">
-        <h3>性格特质</h3>
+        <h3>性格</h3>
         <div className="tag-list">
           {character.traits.map((t) => (
             <span key={t} className="tag tag-trait">
@@ -122,7 +138,7 @@ export function CharacterPanel({
       </section>
 
       <section className="info-section">
-        <h3>喜好</h3>
+        <h3>兴趣爱好</h3>
         <div className="tag-list">
           {character.preferences.map((p) => (
             <span key={p} className="tag tag-pref">

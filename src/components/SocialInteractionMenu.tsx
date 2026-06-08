@@ -216,7 +216,7 @@ export function SocialInteractionMenu({
               className="social-menu-item social-menu-meeting"
               onClick={onInviteMeeting}
             >
-              邀请见面（{meetingParticipantCount} 人）
+              邀请会面（{meetingParticipantCount} 人）
             </button>
           )}
           {!inMeeting && items.length > 0 && meetingParticipantCount >= 2 && (

@@ -22,11 +22,11 @@ interface Props {
 }
 
 const ATTR_LABELS: Record<keyof CreateCharacterInput['attributes'], string> = {
-  diplomacy: '外交',
-  martial: '军事',
-  stewardship: '管理',
-  intrigue: '谋略',
-  learning: '学识',
+  diplomacy: '公关',
+  martial: '行动',
+  stewardship: '统筹',
+  intrigue: '策略',
+  learning: '学养',
 }
 
 function defaultAvatar(gender: CreateCharacterInput['gender'], age: number): string {
@@ -198,7 +198,7 @@ export function CreateCharacterModal({ open, state, onClose, onCreate }: Props) 
             <h2 id="create-char-title" className="modal-title">
               创建新人物
             </h2>
-            <p className="modal-subtitle">将新成员编入当前世界谱系</p>
+            <p className="modal-subtitle">将新成员加入当前世界档案</p>
           </div>
           <button
             type="button"
@@ -319,7 +319,7 @@ export function CreateCharacterModal({ open, state, onClose, onCreate }: Props) 
             <h3>性格与传记</h3>
             <div className="form-grid">
               <div className="form-field form-field--full">
-                <span>性格特质</span>
+                <span>性格</span>
                 <div className="chip-picker">
                   {TRAIT_PRESETS.map((trait) => (
                     <button
@@ -334,7 +334,7 @@ export function CreateCharacterModal({ open, state, onClose, onCreate }: Props) 
                 </div>
               </div>
               <div className="form-field form-field--full">
-                <span>喜好</span>
+                <span>兴趣爱好</span>
                 <div className="chip-picker">
                   {PREFERENCE_PRESETS.map((pref) => (
                     <button
@@ -413,7 +413,7 @@ export function CreateCharacterModal({ open, state, onClose, onCreate }: Props) 
           </section>
 
           <section className="form-section">
-            <h3>人物属性</h3>
+            <h3>能力</h3>
             <div className="attr-input-grid">
               {(Object.keys(ATTR_LABELS) as Array<keyof typeof ATTR_LABELS>).map(
                 (key) => (
@@ -445,7 +445,7 @@ export function CreateCharacterModal({ open, state, onClose, onCreate }: Props) 
               取消
             </button>
             <button type="submit" className="btn-primary">
-              编入谱系
+              加入档案
             </button>
           </footer>
         </form>

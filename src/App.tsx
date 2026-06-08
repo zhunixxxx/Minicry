@@ -4,6 +4,7 @@ import { BornChildModal } from './components/BornChildModal'
 import { DivorceCustodyModal } from './components/DivorceCustodyModal'
 import { MarriageHouseModal } from './components/MarriageHouseModal'
 import { CreateCharacterModal } from './components/CreateCharacterModal'
+import { SettingsModal } from './components/SettingsModal'
 import { FamilyTreeStage } from './components/FamilyTreeStage'
 import { InterventionPanel } from './components/InterventionPanel'
 import { NarrativePanel } from './components/NarrativePanel'
@@ -16,7 +17,12 @@ import type {
   NarrativeEntry,
 } from './types/game'
 import { applyNewCharacter } from './utils/createCharacter'
-import { getInitialGameState, saveGameState } from './utils/gameStorage'
+import {
+  getEmptyGameState,
+  getInitialGameState,
+  getPresetGameState,
+  saveGameState,
+} from './utils/gameStorage'
 import {
   applyDivorce,
   applyMarriage,
@@ -71,6 +77,7 @@ export default function App() {
   const [isProcessing, setIsProcessing] = useState(false)
   const [activeReactions, setActiveReactions] = useState<CharacterReactions>({})
   const [createModalOpen, setCreateModalOpen] = useState(false)
+  const [settingsModalOpen, setSettingsModalOpen] = useState(false)
   const [reproductionDraft, setReproductionDraft] =
     useState<ReproductionDraft | null>(null)
   const [marriageDraft, setMarriageDraft] = useState<MarriageDraft | null>(null)
@@ -79,7 +86,8 @@ export default function App() {
   const reactionTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined)
 
   const selected = state.characters[state.selectedCharacterId]
-  const house = state.houses[selected.houseId]
+  const house = selected ? state.houses[selected.houseId] : undefined
+  const hasCharacters = Object.keys(state.characters).length > 0
 
   const showReactions = useCallback((reactions: CharacterReactions) => {
     if (reactionTimerRef.current) clearTimeout(reactionTimerRef.current)
@@ -286,6 +294,27 @@ export default function App() {
     [reproductionDraft, state],
   )
 
+  const clearSessionState = useCallback(() => {
+    setActiveReactions({})
+    setCreateModalOpen(false)
+    setSettingsModalOpen(false)
+    setReproductionDraft(null)
+    setMarriageDraft(null)
+    setDivorceDraft(null)
+    setMeetingSession(null)
+    if (reactionTimerRef.current) clearTimeout(reactionTimerRef.current)
+  }, [])
+
+  const handleResetSave = useCallback(() => {
+    clearSessionState()
+    setState(getPresetGameState())
+  }, [clearSessionState])
+
+  const handleClearSave = useCallback(() => {
+    clearSessionState()
+    setState(getEmptyGameState())
+  }, [clearSessionState])
+
   const applyIntervention = useCallback(
     async (action: InterventionAction, customText?: string) => {
       setIsProcessing(true)
@@ -336,7 +365,7 @@ export default function App() {
       <header className="app-header">
         <div className="brand">
           <h1 className="brand-title">Minicry</h1>
-          <p className="brand-subtitle">叙事沙盒 · 家谱纪元</p>
+          <p className="brand-subtitle">叙事沙盒 · 王室纪事</p>
         </div>
         <div className="header-center">
           <nav className="house-tabs">
@@ -364,6 +393,15 @@ export default function App() {
             <span className="create-char-icon">＋</span>
             创建人物
           </button>
+          <button
+            type="button"
+            className="settings-btn"
+            onClick={() => setSettingsModalOpen(true)}
+            aria-label="设置"
+            title="设置"
+          >
+            <span className="settings-btn-icon" aria-hidden="true">⚙</span>
+          </button>
         </div>
       </header>
 
@@ -372,6 +410,13 @@ export default function App() {
         state={state}
         onClose={() => setCreateModalOpen(false)}
         onCreate={handleCreateCharacter}
+      />
+
+      <SettingsModal
+        open={settingsModalOpen}
+        onClose={() => setSettingsModalOpen(false)}
+        onResetSave={handleResetSave}
+        onClearSave={handleClearSave}
       />
 
       <BornChildModal
@@ -429,9 +474,10 @@ export default function App() {
       </div>
 
       <InterventionPanel
-        characterName={selected.name}
+        characterName={selected?.name ?? '—'}
         onAction={applyIntervention}
         isProcessing={isProcessing}
+        disabled={!hasCharacters}
       />
     </div>
   )

@@ -21,9 +21,14 @@ function bothAlive(ctx: InteractionContext, state: GameState): boolean {
 
 function buildGreetNarrative(actorName: string, targetName: string): string {
   const templates = [
-    `【互动】${actorName}向${targetName}致意问好，${targetName}颔首回应，气氛融洽。`,
-    `【互动】${actorName}在家谱厅前与${targetName}寒暄数句，旁人看来颇为亲善。`,
-    `【互动】${actorName}远远望见${targetName}，上前打了个招呼。${targetName}微笑应答。`,
+    `【互动】${actorName}向${targetName}打招呼，${targetName}笑着回应，气氛轻松。`,
+    `【互动】${actorName}与${targetName}寒暄了几句，旁人看来颇为融洽。`,
+    `【互动】${actorName}远远看见${targetName}，上前打了个招呼。${targetName}微笑应答。`,
+    `【互动】${actorName}主动找${targetName}攀谈，二人有说有笑，旁人纷纷侧目。`,
+    `【互动】${actorName}与${targetName}在走廊相遇，简单问候后各自离开，留下友好印象。`,
+    `【互动】${actorName}向${targetName}问好，${targetName}热情回应，气氛颇为自然。`,
+    `【互动】${actorName}借故与${targetName}搭话，几句闲聊后，彼此关系似乎更近一步。`,
+    `【互动】${actorName}与${targetName}在会客厅碰面，互致问候，场面平和而得体。`,
   ]
   return templates[Math.floor(Math.random() * templates.length)]
 }
@@ -47,8 +52,8 @@ export const friendlyGreetAction: InteractionActionHandler = {
     if (!canFriendlyInteract(ctx, state)) {
       return friendlyInteractDisabledReason(ctx, state)
     }
-    if (!actor?.isAlive) return '发起者已不在世'
-    if (!target?.isAlive) return '目标已不在世'
+    if (!actor?.isAlive) return '发起者已故'
+    if (!target?.isAlive) return '目标已故'
     return '暂时无法执行'
   },
 

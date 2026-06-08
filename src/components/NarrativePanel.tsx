@@ -28,7 +28,7 @@ export function NarrativePanel({
   return (
     <aside className="panel narrative-panel">
       <header className="panel-header">
-        <span className="panel-label">核心叙事</span>
+        <span className="panel-label">故事线</span>
         <time className="game-date">{formatDate(year, month)}</time>
       </header>
 

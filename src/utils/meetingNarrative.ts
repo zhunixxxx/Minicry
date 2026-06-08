@@ -46,15 +46,15 @@ function buildMeetingStartText(
 ): string {
   if (crossHouse) {
     return pick([
-      `【会晤】${hostName}发出邀约，${othersText}应约而至，跨族会晤正式开始。`,
-      `【会晤】${hostName}与${othersText}在会晤厅相见，两族同席，气氛谨慎而正式。`,
-      `【会晤】${hostName}召集${othersText}等人会面，共 ${participantCount} 人出席，跨族会谈就此开幕。`,
+      `【会面】${hostName}发出邀请，${othersText}应邀到场，跨家族会面正式开始。`,
+      `【会面】${hostName}与${othersText}在会客厅相见，两族同席，气氛谨慎而正式。`,
+      `【会面】${hostName}召集${othersText}等人会面，共 ${participantCount} 人出席，跨家族会谈就此开始。`,
     ])
   }
   return pick([
-    `【会晤】${hostName}邀请${othersText}见面，${participantCount} 人齐聚会晤厅，会谈开始。`,
-    `【会晤】${hostName}召集${othersText}等人，族中会晤就此开幕。`,
-    `【会晤】${hostName}与${othersText}等人应约而至，会晤正式开始。`,
+    `【会面】${hostName}邀请${othersText}见面，${participantCount} 人齐聚会客厅，会谈开始。`,
+    `【会面】${hostName}召集${othersText}等人，家族内部会面就此开始。`,
+    `【会面】${hostName}与${othersText}等人到场，会面正式开始。`,
   ])
 }
 
@@ -65,15 +65,15 @@ function buildMeetingEndText(
 ): string {
   if (crossHouse) {
     return pick([
-      `【会晤】${hostName}与${othersText}的跨族会面结束，各自散去。`,
-      `【会晤】会谈告一段落，${hostName}与${othersText}等人告别离去。`,
-      `【会晤】跨族会晤结束，${hostName}与${othersText}等人先后离席。`,
+      `【会面】${hostName}与${othersText}的跨家族会面结束，各自散去。`,
+      `【会面】会谈告一段落，${hostName}与${othersText}等人告别离开。`,
+      `【会面】跨家族会面结束，${hostName}与${othersText}等人先后离场。`,
     ])
   }
   return pick([
-    `【会晤】${hostName}与${othersText}等人的会面结束，众人各自散去。`,
-    `【会晤】族中会晤告一段落，${hostName}与${othersText}等人告别离去。`,
-    `【会晤】会谈结束，${hostName}与${othersText}等人先后离席。`,
+    `【会面】${hostName}与${othersText}等人的会面结束，众人各自散去。`,
+    `【会面】家族内部会面告一段落，${hostName}与${othersText}等人告别离开。`,
+    `【会面】会谈结束，${hostName}与${othersText}等人先后离场。`,
   ])
 }
 

@@ -24,9 +24,14 @@ function bothAlive(ctx: InteractionContext, state: GameState): boolean {
 
 function buildFlirtNarrative(actorName: string, targetName: string): string {
   const templates = [
-    `【浪漫】${actorName}向${targetName}说了几句带情的话，${targetName}神色微变，旁若无人般暧昧了一瞬。`,
-    `【浪漫】${actorName}借故靠近${targetName}，言语间尽是调笑，气氛悄然升温。`,
+    `【浪漫】${actorName}对${targetName}说了几句暧昧的话，${targetName}神色微变，气氛悄然升温。`,
+    `【浪漫】${actorName}借故靠近${targetName}，言语间带着调笑，二人对视了一瞬。`,
     `【浪漫】${actorName}对${targetName}出言调情，二人目光交汇，心照不宣。`,
+    `【浪漫】${actorName}低声对${targetName}说了些什么，${targetName}别过脸去，耳根却红了。`,
+    `【浪漫】${actorName}与${targetName}独处片刻，言语间尽是试探与暗示，旁人无从知晓。`,
+    `【浪漫】${actorName}逗弄${targetName}几句，${targetName}嘴上推拒，眼里却有笑意。`,
+    `【浪漫】${actorName}在${targetName}耳边轻声说了句话，${targetName}愣了一秒，随即别过视线。`,
+    `【浪漫】${actorName}与${targetName}目光纠缠片刻，谁都没有先开口，空气却热了起来。`,
   ]
   return templates[Math.floor(Math.random() * templates.length)]
 }
@@ -50,8 +55,8 @@ export const romanticFlirtAction: InteractionActionHandler = {
     if (!canRomanticInteract(ctx, state)) {
       return romanticInteractDisabledReason(ctx, state)
     }
-    if (!actor?.isAlive) return '发起者已不在世'
-    if (!target?.isAlive) return '目标已不在世'
+    if (!actor?.isAlive) return '发起者已故'
+    if (!target?.isAlive) return '目标已故'
     return '暂时无法执行'
   },
 

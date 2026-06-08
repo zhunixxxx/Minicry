@@ -66,7 +66,7 @@ export function MarriageHouseModal({
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!houseId) {
-      setError('请选择入籍家族')
+      setError('请选择加入的家族')
       return
     }
 
@@ -85,20 +85,20 @@ export function MarriageHouseModal({
         <header className="modal-header">
           <div>
             <h2 id="marriage-house-title" className="modal-title">
-              婚礼入籍
+              婚礼登记
             </h2>
             <p className="modal-subtitle">
-              {draft.actorName} 与 {draft.targetName} 喜结连理，请选择二人入籍的家族
+              {draft.actorName} 与 {draft.targetName} 即将完婚，请选择二人加入的家族
             </p>
           </div>
         </header>
 
         <form className="modal-body" onSubmit={handleSubmit}>
           <section className="form-section">
-            <h3>入籍家族</h3>
+            <h3>加入家族</h3>
             {sameHouse ? (
               <p className="form-hint">
-                双方本属同一家族（{actorHouse?.name ?? '未知家族'}），婚礼后将共同记入该族谱。
+                双方本属同一家族（{actorHouse?.name ?? '未知家族'}），婚礼后将共同记入该家族档案。
               </p>
             ) : (
               <div className="form-grid">
@@ -148,7 +148,7 @@ export function MarriageHouseModal({
             <section className="form-section">
               <h3>子女随迁</h3>
               <p className="form-hint">
-                {moverName} 将离开原家族，以下子女是否随其一同入籍？
+                {moverName} 将离开原家族，以下子女是否随其一同加入？
               </p>
               <div className="house-choice-list">
                 {relocatableChildren.map((child) => (

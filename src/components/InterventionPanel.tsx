@@ -5,21 +5,27 @@ interface Props {
   characterName: string
   onAction: (action: InterventionAction, customText?: string) => void
   isProcessing: boolean
+  disabled?: boolean
 }
 
 const QUICK_ACTIONS: { action: InterventionAction; label: string; icon: string }[] = [
   { action: 'advance_time', label: '推进时间', icon: '⏳' },
-  { action: 'boost_diplomacy', label: '外交斡旋', icon: '🤝' },
-  { action: 'arrange_marriage', label: '安排联姻', icon: '💍' },
+  { action: 'boost_diplomacy', label: '公关斡旋', icon: '🤝' },
+  { action: 'arrange_marriage', label: '撮合婚约', icon: '💍' },
   { action: 'spark_rivalry', label: '挑起争端', icon: '⚔️' },
 ]
 
-export function InterventionPanel({ characterName, onAction, isProcessing }: Props) {
+export function InterventionPanel({
+  characterName,
+  onAction,
+  isProcessing,
+  disabled = false,
+}: Props) {
   const [customText, setCustomText] = useState('')
 
   function handleSubmit() {
     const trimmed = customText.trim()
-    if (!trimmed || isProcessing) return
+    if (!trimmed || isProcessing || disabled) return
     onAction('custom', trimmed)
     setCustomText('')
   }
@@ -41,7 +47,7 @@ export function InterventionPanel({ characterName, onAction, isProcessing }: Pro
                 key={action}
                 type="button"
                 className="action-btn"
-                disabled={isProcessing}
+                disabled={isProcessing || disabled}
                 onClick={() => onAction(action)}
               >
                 <span className="action-icon">{icon}</span>
@@ -53,7 +59,7 @@ export function InterventionPanel({ characterName, onAction, isProcessing }: Pro
           <div className="custom-intervention">
             <textarea
               className="custom-input"
-              placeholder="描述你的意志……例如：「让艾琳娜秘密会见罗万，商议停战条约」"
+              placeholder="写下你想发生的事……例如：「让艾琳娜秘密会见罗万，商议停战协议」"
               value={customText}
               onChange={(e) => setCustomText(e.target.value)}
               onKeyDown={(e) => {
@@ -63,12 +69,12 @@ export function InterventionPanel({ characterName, onAction, isProcessing }: Pro
                 }
               }}
               rows={2}
-              disabled={isProcessing}
+              disabled={isProcessing || disabled}
             />
             <button
               type="button"
               className="submit-btn"
-              disabled={!customText.trim() || isProcessing}
+              disabled={!customText.trim() || isProcessing || disabled}
               onClick={handleSubmit}
             >
               {isProcessing ? '推演中…' : 'AI 推演'}

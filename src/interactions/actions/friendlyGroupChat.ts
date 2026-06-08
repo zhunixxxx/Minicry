@@ -25,9 +25,14 @@ function allAlive(actorId: string, targetIds: string[], state: GameState): boole
 function buildGroupChatNarrative(actorName: string, targetNames: string[]): string {
   const others = targetNames.join('、')
   const templates = [
-    `【互动】${actorName}与${others}围坐畅谈，笑语不绝。`,
-    `【互动】${actorName}发起话题，${others}纷纷应和，气氛颇为热络。`,
-    `【互动】${actorName}同${others}闲聊片刻，各抒己见，相谈甚欢。`,
+    `【互动】${actorName}与${others}围坐聊天，笑声不断。`,
+    `【互动】${actorName}发起话题，${others}纷纷接话，气氛热络。`,
+    `【互动】${actorName}同${others}闲聊片刻，各抒己见，聊得挺开心。`,
+    `【互动】${actorName}抛出一个话题，${others}各抒己见，争论与笑声交替不断。`,
+    `【互动】${actorName}与${others}聊起了近况，从公务到私事，话题越聊越开。`,
+    `【互动】${actorName}同${others}在茶歇时闲聊，气氛轻松，旁人也被吸引过来。`,
+    `【互动】${actorName}与${others}围成一圈，有说有笑，难得的融洽时光。`,
+    `【互动】${actorName}向${others}分享见闻，众人时而惊叹时而哄笑，相谈甚欢。`,
   ]
   return templates[Math.floor(Math.random() * templates.length)]
 }
@@ -50,9 +55,9 @@ export const friendlyGroupChatAction: InteractionActionHandler = {
       return friendlyInteractDisabledReason(ctx, state)
     }
     const actor = state.characters[ctx.actorId]
-    if (!actor?.isAlive) return '发起者已不在世'
+    if (!actor?.isAlive) return '发起者已故'
     if (targets.some((id) => !state.characters[id]?.isAlive)) {
-      return '部分对象已不在世'
+      return '部分对象已故'
     }
     return '暂时无法执行'
   },

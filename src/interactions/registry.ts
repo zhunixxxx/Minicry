@@ -77,7 +77,7 @@ export const INTERACTION_MENU_ROOT: InteractionMenuItem[] = [
       },
       {
         id: 'romantic-reproduce',
-        label: '传宗接代',
+        label: '生育子女',
         kind: 'action',
         actionId: 'romantic.reproduce',
         scope: 'single',

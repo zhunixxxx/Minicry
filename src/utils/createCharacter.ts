@@ -96,7 +96,7 @@ export function buildCharacterFromInput(
     spouseIds: input.spouseId ? [input.spouseId] : [],
     isAlive: true,
     attributes: { ...input.attributes },
-    bio: input.bio.trim() || '此人刚刚踏入谱系，生平尚待书写。',
+    bio: input.bio.trim() || '刚加入家族档案，生平尚待书写。',
   }
 }
 
@@ -151,7 +151,7 @@ export function applyNewCharacter(
 
   if (character.spouseIds[0]) {
     const spouseName = updatedCharacters[character.spouseIds[0]]?.name
-    if (spouseName) relationParts.push(`与${spouseName}结为连理`)
+    if (spouseName) relationParts.push(`与${spouseName}缔结婚姻`)
   }
 
   const relationText = relationParts.length > 0 ? `，${relationParts.join('，')}` : ''
@@ -168,7 +168,7 @@ export function applyNewCharacter(
       year: state.year,
       month: state.month,
       type: 'system',
-      text: `【谱系更新】${character.name}被记入${house?.name ?? '家族'}世系${relationText}。${character.traits[0] ? `世人初评其性${character.traits.join('、')}。` : ''}`,
+      text: `【人事登记】${character.name}正式录入${house?.name ?? '家族'}档案${relationText}。${character.traits[0] ? `初评性格：${character.traits.join('、')}。` : ''}`,
       characterIds: [character.id, ...character.parentIds, ...character.spouseIds],
     },
   }

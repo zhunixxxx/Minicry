@@ -1,4 +1,8 @@
-import { initialGameState } from '../data/initialState'
+import {
+  createPresetGameState,
+  emptyGameState,
+  initialGameState,
+} from '../data/initialState'
 import type { GameState } from '../types/game'
 
 const STORAGE_KEY = 'minicry:game-state'
@@ -38,4 +42,12 @@ export function clearGameState(): void {
 
 export function getInitialGameState(): GameState {
   return loadGameState() ?? initialGameState
+}
+
+export function getPresetGameState(): GameState {
+  return createPresetGameState()
+}
+
+export function getEmptyGameState(): GameState {
+  return { ...emptyGameState }
 }

@@ -3,10 +3,10 @@ import type { Gender } from '../types/game'
 export type AgeGroup = 'child' | 'youth' | 'adult' | 'elder'
 
 export const AGE_GROUP_LABELS: Record<AgeGroup, string> = {
-  child: '幼年',
+  child: '童年',
   youth: '青年',
-  adult: '壮年',
-  elder: '暮年',
+  adult: '成年',
+  elder: '老年',
 }
 
 const AVATAR_PREFIX = 'av:'

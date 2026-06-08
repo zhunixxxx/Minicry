@@ -61,7 +61,7 @@ export function BornChildModal({
       return
     }
     if (!houseId) {
-      setError('请选择入籍家族')
+      setError('请选择加入的家族')
       return
     }
 
@@ -88,14 +88,14 @@ export function BornChildModal({
             </h2>
             <p className="modal-subtitle">
               {draft.fatherName} 与 {draft.motherName} 喜得
-              {GENDER_LABEL[draft.childGender]}婴，请为孩子命名并入籍
+              {GENDER_LABEL[draft.childGender]}婴，请为孩子命名并选择加入的家族
             </p>
           </div>
         </header>
 
         <form className="modal-body" onSubmit={handleSubmit}>
           <section className="form-section">
-            <h3>命名入籍</h3>
+            <h3>命名登记</h3>
             <div className="form-grid form-grid--3">
               <label className="form-field">
                 <span>姓氏 *</span>
@@ -126,7 +126,7 @@ export function BornChildModal({
 
             <div className="form-grid">
               <div className="form-field form-field--full">
-                <span>入籍家族 *</span>
+                <span>加入家族 *</span>
                 <div className="house-choice-list">
                   {sameHouse ? (
                     <label className="house-choice-item">
@@ -201,7 +201,7 @@ export function BornChildModal({
           </section>
 
           <section className="form-section">
-            <h3>继承特质</h3>
+            <h3>继承性格</h3>
             <div className="form-grid">
               <div className="form-field form-field--full">
                 <span>自父母各继承一项性格</span>
@@ -217,7 +217,7 @@ export function BornChildModal({
                     ))}
                   </div>
                 ) : (
-                  <p className="form-hint">未继承父母特质</p>
+                  <p className="form-hint">未继承父母性格</p>
                 )}
               </div>
             </div>
@@ -227,7 +227,7 @@ export function BornChildModal({
 
           <footer className="modal-footer">
             <button type="submit" className="btn-primary">
-              记入谱系
+              加入档案
             </button>
           </footer>
         </form>

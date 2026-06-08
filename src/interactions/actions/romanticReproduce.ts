@@ -19,6 +19,6 @@ export const romanticReproduceAction: InteractionActionHandler = {
   },
 
   execute(): InteractionResult {
-    throw new Error('传宗接代需通过命名弹窗完成')
+    throw new Error('生育需通过命名登记弹窗完成')
   },
 }

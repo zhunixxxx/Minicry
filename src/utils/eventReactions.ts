@@ -13,37 +13,37 @@ function reactionByTraits(char: Character, entry: NarrativeEntry): string {
   const type = entry.type
 
   if (type === 'player') {
-    if (traits.includes('野心勃勃')) return '命运终于开始转动……'
-    if (traits.includes('谨慎') || traits.includes('多疑')) return '这步棋太险，须再三权衡。'
-    if (traits.includes('仁慈')) return '但愿此举不伤无辜。'
-    if (traits.includes('傲慢')) return '正合我意，何须多言？'
-    if (traits.includes('狡黠')) return '有趣，且看我如何借力。'
-    return '有人在暗中推动棋局。'
+    if (traits.includes('进取心强')) return '机会来了……'
+    if (traits.includes('审慎') || traits.includes('戒心重')) return '这步太冒险，得再想想。'
+    if (traits.includes('有同理心')) return '希望不要伤及无辜。'
+    if (traits.includes('骄傲')) return '正合我意。'
+    if (traits.includes('机灵')) return '有意思，看看怎么借力。'
+    return '有人在背后推动局面。'
   }
 
-  if (traits.includes('野心勃勃')) return '机会来了，绝不能失手。'
-  if (traits.includes('怯懦') || traits.includes('隐忍')) return '……还是先观望吧。'
-  if (traits.includes('傲慢')) return '不过如此。'
-  if (traits.includes('仁慈')) return '希望不要有人受伤。'
-  if (traits.includes('坚毅')) return '既已如此，便无可退。'
-  if (traits.includes('狡黠')) return '此事另有隐情。'
-  if (traits.includes('虔诚')) return '愿诸神指引迷途。'
-  if (traits.includes('急躁')) return '还等什么？快行动！'
-  if (traits.includes('好学')) return '得记下今日种种……'
-  if (traits.includes('冷酷')) return '正合我意。'
-  if (traits.includes('多情')) return '心里忽然有些乱。'
+  if (traits.includes('进取心强')) return '机会来了，不能错过。'
+  if (traits.includes('敏感') || traits.includes('低调')) return '……还是先观望吧。'
+  if (traits.includes('骄傲')) return '不过如此。'
+  if (traits.includes('有同理心')) return '希望不要有人受伤。'
+  if (traits.includes('抗压强')) return '事已至此，只能往前。'
+  if (traits.includes('机灵')) return '这事没那么简单。'
+  if (traits.includes('有原则')) return '希望一切顺利。'
+  if (traits.includes('急性子')) return '还等什么？快行动！'
+  if (traits.includes('求知欲强')) return '得把今天的事记下来……'
+  if (traits.includes('冷静')) return '正合我意。'
+  if (traits.includes('重感情')) return '心里忽然有些乱。'
 
-  return '局势愈发难料了。'
+  return '局势越来越复杂了。'
 }
 
 const PRESET_REACTIONS: Record<string, Record<string, string>> = {
   'n-2': {
     'char-elena': '这一天，我等了很久。',
-    'char-aldrin': '黑木的未来，托付给你了。',
+    'char-aldrin': '黑木的未来，交给你了。',
     'char-cedric': '姐姐……她确实比我更适合。',
   },
   'n-3': {
-    'char-elena': '哪怕只有一刻，也足够了。',
+    'char-elena': '哪怕只有一会儿，也够了。',
     'char-rowan': '我宁愿冒险，也不愿再等了。',
     'char-lyra': '你们的事，我会守口如瓶。',
   },
@@ -99,11 +99,11 @@ export function enrichNarrative(
 
 export function randomWitnessReaction(char: Character): string {
   const lines = [
-    `这与${char.title}何干？`,
-    '我闻到了变故的气息。',
-    '且静观其变。',
-    pick(['令人不安。', '倒也有趣。', '意料之中。']),
+    `这跟${char.title}有什么关系？`,
+    '感觉要有大事发生。',
+    '先看看再说。',
+    pick(['有点不安。', '倒也有趣。', '意料之中。']),
   ]
-  if (char.traits.includes('多疑')) return '其中必有蹊跷。'
+  if (char.traits.includes('戒心重')) return '这里面肯定有猫腻。'
   return pick(lines)
 }

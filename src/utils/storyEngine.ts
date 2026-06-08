@@ -58,11 +58,11 @@ function generateAmbientEvent(
   const other = pickRandom(chars.filter((c) => c.id !== focus.id))
 
   const templates = [
-    `${focus.name}在领地内巡视，百姓纷纷驻足行礼。`,
-    `${focus.name}与${other.name}在宫廷晚宴上目光交汇，气氛微妙。`,
-    `边境传来驿报，${other.houseId === focus.houseId ? '家族' : '敌族'}使者求见。`,
-    `${focus.name}独自在书房批阅文书，窗外春雨淅沥。`,
-    `市集上传来消息：今年收成${Math.random() > 0.5 ? '颇丰' : '欠佳'}，民间议论纷纷。`,
+    `${focus.name}在辖区视察，民众纷纷驻足致意。`,
+    `${focus.name}与${other.name}在国事晚宴上目光交汇，气氛微妙。`,
+    `边境传来消息，${other.houseId === focus.houseId ? '家族' : '对方'}代表请求会面。`,
+    `${focus.name}独自在办公室批阅文件，窗外春雨淅沥。`,
+    `地方传来消息：今年收成${Math.random() > 0.5 ? '不错' : '一般'}，舆论议论纷纷。`,
   ]
 
   const entry: NarrativeEntry = {
@@ -101,7 +101,7 @@ export function interveneBoostDiplomacy(
       year: state.year,
       month: state.month,
       type: 'player',
-      text: `【玩家干预】你暗中安排${char.name}参与一系列外交宴会。${char.name}的外交能力提升了，领地间的紧张气氛略有缓和。`,
+      text: `【玩家干预】你安排${char.name}参与一系列公关活动。${char.name}的公关能力提升了，两族之间的紧张气氛略有缓和。`,
       characterIds: [char.id],
     },
     state.characters,
@@ -134,7 +134,7 @@ export function interveneArrangeMarriage(
         year: state.year,
         month: state.month,
         type: 'player',
-        text: `【玩家干预】你试图为${char.name}安排联姻，但目前没有合适的对象。`,
+        text: `【玩家干预】你试图为${char.name}撮合婚约，但目前没有合适的对象。`,
         characterIds: [char.id],
       },
       state.characters,
@@ -146,7 +146,7 @@ export function interveneArrangeMarriage(
     ...char,
     relations: [
       ...char.relations,
-      { targetId: partner.id, type: 'lover', label: '政治联姻对象' },
+      { targetId: partner.id, type: 'lover', label: '政治婚约对象' },
     ],
   }
 
@@ -156,7 +156,7 @@ export function interveneArrangeMarriage(
       year: state.year,
       month: state.month,
       type: 'player',
-      text: `【玩家干预】你撮合了${char.name}与${partner.name}的会面。双方家族开始秘密磋商联姻条款，流言已在贵族圈中蔓延。`,
+      text: `【玩家干预】你撮合了${char.name}与${partner.name}的会面。双方家族开始秘密磋商婚约条款，消息已在社交圈流传。`,
       characterIds: [char.id, partner.id],
     },
     state.characters,
@@ -185,7 +185,7 @@ export function interveneSparkRivalry(
         year: state.year,
         month: state.month,
         type: 'player',
-        text: `【玩家干预】你想挑起${char.name}的宿敌之争，但局势尚不明朗。`,
+        text: `【玩家干预】你想挑起${char.name}与政敌的争端，但局势尚不明朗。`,
         characterIds: [char.id],
       },
       state.characters,
@@ -199,7 +199,7 @@ export function interveneSparkRivalry(
       year: state.year,
       month: state.month,
       type: 'player',
-      text: `【玩家干预】你授意散布${char.name}与${rival.name}之间的诽谤信件。双方侍卫在边境酒馆发生斗殴，外交危机一触即发。`,
+      text: `【玩家干预】你授意散布${char.name}与${rival.name}之间的负面消息。双方随行人员在边境发生肢体冲突，外交危机一触即发。`,
       characterIds: [char.id, rival.id],
     },
     state.characters,
@@ -215,9 +215,9 @@ export function interveneCustomStory(
   const house = state.houses[char.houseId]
 
   const responses = [
-    `【AI 推演 · ${formatDate(state.year, state.month)}】受你的意志驱使，${char.name}开始行动：${prompt}。这一举动在${house.name}内部引发震动，侍从们窃窃私语，而边境的暗流似乎也随之加速了。`,
-    `【AI 推演 · ${formatDate(state.year, state.month)}】"${prompt}"——这一指令落入${char.name}耳中。数日后，城堡大厅传出消息：局势正朝着不可预测的方向演变。`,
-    `【AI 推演 · ${formatDate(state.year, state.month)}】你写下旨意：${prompt}。${char.name}领命而去。月光下，${house.emblem} 家族的旗帜在城墙上静静飘扬，仿佛在等待命运的下一幕。`,
+    `【AI 推演 · ${formatDate(state.year, state.month)}】按照你的安排，${char.name}开始行动：${prompt}。这一举动在${house.name}内部引发震动，幕僚们议论纷纷，边境局势似乎也随之升温。`,
+    `【AI 推演 · ${formatDate(state.year, state.month)}】"${prompt}"——${char.name}收到指令。数日后，官邸传出消息：局势正朝着不可预测的方向演变。`,
+    `【AI 推演 · ${formatDate(state.year, state.month)}】你发出指令：${prompt}。${char.name}随即着手安排。${house.emblem} ${house.name}的旗帜在官邸上空飘扬，下一幕尚未揭晓。`,
   ]
 
   const entry = enrichNarrativeEntry(

@@ -92,7 +92,7 @@ export function DivorceCustodyModal({
             <section className="form-section">
               <h3>共同子女抚养</h3>
               <p className="form-hint">
-                选定归属后，子女将入籍该方家族。
+                选定归属后，子女将加入该方家族。
               </p>
               {draft.sharedChildren.map((child) => (
                 <div key={child.id} className="form-grid" style={{ marginBottom: 12 }}>

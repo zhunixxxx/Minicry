@@ -13,6 +13,6 @@ export const marriageMarryAction: InteractionActionHandler = {
   },
 
   execute() {
-    throw new Error('结婚需通过入籍弹窗完成')
+    throw new Error('结婚需通过婚礼登记弹窗完成')
   },
 }
