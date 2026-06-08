@@ -25,14 +25,14 @@ function allAlive(actorId: string, targetIds: string[], state: GameState): boole
 function buildGroupChatNarrative(actorName: string, targetNames: string[]): string {
   const others = targetNames.join('、')
   const templates = [
-    `【互动】${actorName}与${others}围坐聊天，笑声不断。`,
-    `【互动】${actorName}发起话题，${others}纷纷接话，气氛热络。`,
-    `【互动】${actorName}同${others}闲聊片刻，各抒己见，聊得挺开心。`,
+    `【互动】${actorName}与${others}围坐客厅，笑声不断。`,
+    `【互动】${actorName}发起话题，${others}纷纷接话，茶叙气氛热络。`,
+    `【互动】${actorName}同${others}闲聊片刻，各抒己见，相谈甚欢。`,
     `【互动】${actorName}抛出一个话题，${others}各抒己见，争论与笑声交替不断。`,
-    `【互动】${actorName}与${others}聊起了近况，从公务到私事，话题越聊越开。`,
-    `【互动】${actorName}同${others}在茶歇时闲聊，气氛轻松，旁人也被吸引过来。`,
+    `【互动】${actorName}与${others}聊起了近况，从庄园公务到伦敦社交，话题越聊越开。`,
+    `【互动】${actorName}同${others}在下午茶时闲聊，气氛轻松，旁人也被吸引过来。`,
     `【互动】${actorName}与${others}围成一圈，有说有笑，难得的融洽时光。`,
-    `【互动】${actorName}向${others}分享见闻，众人时而惊叹时而哄笑，相谈甚欢。`,
+    `【互动】${actorName}向${others}分享伦敦见闻，众人时而惊叹时而哄笑，相谈甚欢。`,
   ]
   return templates[Math.floor(Math.random() * templates.length)]
 }

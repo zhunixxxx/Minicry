@@ -10,9 +10,6 @@ interface Props {
 
 const QUICK_ACTIONS: { action: InterventionAction; label: string; icon: string }[] = [
   { action: 'advance_time', label: '推进时间', icon: '⏳' },
-  { action: 'boost_diplomacy', label: '公关斡旋', icon: '🤝' },
-  { action: 'arrange_marriage', label: '撮合婚约', icon: '💍' },
-  { action: 'spark_rivalry', label: '挑起争端', icon: '⚔️' },
 ]
 
 export function InterventionPanel({
@@ -59,7 +56,7 @@ export function InterventionPanel({
           <div className="custom-intervention">
             <textarea
               className="custom-input"
-              placeholder="写下你想发生的事……例如：「让艾琳娜秘密会见罗万，商议停战协议」"
+              placeholder="写下你想发生的事……例如：「让艾琳娜借拜访之名，于花园与罗万密会」"
               value={customText}
               onChange={(e) => setCustomText(e.target.value)}
               onKeyDown={(e) => {

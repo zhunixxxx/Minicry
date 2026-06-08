@@ -6,6 +6,7 @@ import {
   getContentBounds,
   layoutFamilyTree,
   layoutMeetingTree,
+  type TreeNode,
 } from '../utils/familyTree'
 import { OffTreeChildrenPopover } from './OffTreeChildrenPopover'
 import { computeInteractionTargets } from '../interactions/utils'
@@ -34,7 +35,73 @@ interface Props {
 
 const NODE_W = 88
 const NODE_H = 100
+const PARENT_STEM_LEN = 16
 const MORE_BTN_SIZE = 18
+
+/** 夫妻从节点下方垂落汇合；有子女时继续分叉连至各子女 */
+function buildCoupleConnectorPath(
+  parentIds: string[],
+  childIds: string[],
+  nodeMap: Map<string, TreeNode>,
+): string {
+  const parents = parentIds
+    .map((id) => nodeMap.get(id))
+    .filter((n): n is TreeNode => n != null)
+    .sort((a, b) => a.x - b.x)
+
+  const children = childIds
+    .map((id) => nodeMap.get(id))
+    .filter((n): n is TreeNode => n != null)
+    .sort((a, b) => a.x - b.x)
+
+  if (parents.length === 0) return ''
+
+  const parentBottom = Math.max(...parents.map((p) => p.y + NODE_H))
+  const stemMergeY = parentBottom + PARENT_STEM_LEN
+
+  const parts: string[] = []
+
+  for (const p of parents) {
+    const px = p.x + NODE_W / 2
+    const py = p.y + NODE_H
+    parts.push(`M ${px} ${py} L ${px} ${stemMergeY}`)
+  }
+
+  if (parents.length >= 2) {
+    const xs = parents.map((p) => p.x + NODE_W / 2)
+    parts.push(`M ${Math.min(...xs)} ${stemMergeY} L ${Math.max(...xs)} ${stemMergeY}`)
+  }
+
+  const parentCenters = parents.map((p) => p.x + NODE_W / 2)
+  const centerX =
+    parentCenters.length === 1
+      ? parentCenters[0]
+      : (parentCenters[0] + parentCenters[parentCenters.length - 1]) / 2
+
+  if (children.length === 0) {
+    if (parents.length >= 2) {
+      parts.push(`M ${centerX} ${stemMergeY} L ${centerX} ${stemMergeY + PARENT_STEM_LEN}`)
+    }
+    return parts.join(' ')
+  }
+
+  const childTop = Math.min(...children.map((c) => c.y))
+  const busY = (parentBottom + childTop) / 2
+
+  parts.push(`M ${centerX} ${stemMergeY} L ${centerX} ${busY}`)
+
+  const childCenters = children.map((c) => c.x + NODE_W / 2)
+  const busLeft = Math.min(centerX, ...childCenters)
+  const busRight = Math.max(centerX, ...childCenters)
+  parts.push(`M ${busLeft} ${busY} L ${busRight} ${busY}`)
+
+  for (const c of children) {
+    const cx = c.x + NODE_W / 2
+    parts.push(`M ${cx} ${busY} L ${cx} ${c.y}`)
+  }
+
+  return parts.join(' ')
+}
 /** 略超出节点右下角，营造悬浮叠放感 */
 const MORE_BTN_X = NODE_W - MORE_BTN_SIZE + 5
 const MORE_BTN_Y = NODE_H - MORE_BTN_SIZE + 5
@@ -95,6 +162,46 @@ export function FamilyTreeStage({
     () => new Map(layout.nodes.map((n) => [n.id, n])),
     [layout.nodes],
   )
+
+  const coupleConnectorPaths = useMemo(() => {
+    const childToParents = new Map<string, string[]>()
+    for (const edge of layout.edges) {
+      if (edge.type !== 'parent') continue
+      const list = childToParents.get(edge.to) ?? []
+      list.push(edge.from)
+      childToParents.set(edge.to, list)
+    }
+
+    const parentGroups = new Map<string, string[]>()
+    for (const [childId, parents] of childToParents) {
+      const key = [...new Set(parents)].sort().join(',')
+      const list = parentGroups.get(key) ?? []
+      list.push(childId)
+      parentGroups.set(key, list)
+    }
+
+    const paths: string[] = []
+    const coveredCouples = new Set<string>()
+
+    for (const [parentKey, childIds] of parentGroups) {
+      const parentIds = parentKey.split(',')
+      if (parentIds.length === 2) coveredCouples.add(parentIds.join(','))
+      const d = buildCoupleConnectorPath(parentIds, childIds, nodeMap)
+      if (d) paths.push(d)
+    }
+
+    const seenSpouse = new Set<string>()
+    for (const edge of layout.edges) {
+      if (edge.type !== 'spouse') continue
+      const pairKey = [edge.from, edge.to].sort().join(',')
+      if (seenSpouse.has(pairKey) || coveredCouples.has(pairKey)) continue
+      seenSpouse.add(pairKey)
+      const d = buildCoupleConnectorPath([edge.from, edge.to], [], nodeMap)
+      if (d) paths.push(d)
+    }
+
+    return paths
+  }, [layout.edges, nodeMap])
 
   const [pan, setPan] = useState<Pan>({ x: 0, y: 0 })
   const [zoom, setZoom] = useState(1)
@@ -176,25 +283,6 @@ export function FamilyTreeStage({
     const viewH = layout.height / zoom
     return `${pan.x} ${pan.y} ${viewW} ${viewH}`
   }, [pan, zoom, layout.width, layout.height])
-
-  function edgePath(fromId: string, toId: string, type: 'parent' | 'spouse'): string {
-    const from = nodeMap.get(fromId)
-    const to = nodeMap.get(toId)
-    if (!from || !to) return ''
-
-    const fx = from.x + NODE_W / 2
-    const fy = from.y + NODE_H
-    const tx = to.x + NODE_W / 2
-    const ty = to.y
-
-    if (type === 'spouse') {
-      const midY = from.y + NODE_H / 2
-      return `M ${from.x + NODE_W} ${midY} L ${to.x} ${midY}`
-    }
-
-    const midY = (fy + ty) / 2
-    return `M ${fx} ${from.y + NODE_H / 2} L ${fx} ${midY} L ${tx} ${midY} L ${tx} ${ty}`
-  }
 
   const applyZoom = useCallback(
     (nextZoom: number, anchorX?: number, anchorY?: number) => {
@@ -520,11 +608,11 @@ export function FamilyTreeStage({
             fill="transparent"
           />
 
-          {layout.edges.map((edge, i) => (
+          {coupleConnectorPaths.map((d, i) => (
             <path
-              key={`edge-${i}`}
-              d={edgePath(edge.from, edge.to, edge.type)}
-              className={`tree-edge tree-edge--${edge.type}`}
+              key={`couple-conn-${i}`}
+              d={d}
+              className="tree-edge tree-edge--parent"
               fill="none"
             />
           ))}

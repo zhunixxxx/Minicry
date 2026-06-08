@@ -1,35 +1,28 @@
 import type { Gender } from '../types/game'
+import {
+  AGE_GROUP_LABELS,
+  getAgeGroup,
+  getAvatarVisualGroup,
+  type AgeGroup,
+  type AvatarVisualGroup,
+} from './ageGroups'
 
-export type AgeGroup = 'child' | 'youth' | 'adult' | 'elder'
-
-export const AGE_GROUP_LABELS: Record<AgeGroup, string> = {
-  child: '童年',
-  youth: '青年',
-  adult: '成年',
-  elder: '老年',
-}
+export { AGE_GROUP_LABELS, getAgeGroup, type AgeGroup }
 
 const AVATAR_PREFIX = 'av:'
 
-export function getAgeGroup(age: number): AgeGroup {
-  if (age <= 12) return 'child'
-  if (age <= 25) return 'youth'
-  if (age <= 50) return 'adult'
-  return 'elder'
-}
-
 export function makeAvatarId(
   gender: Gender,
-  ageGroup: AgeGroup,
+  visualGroup: AvatarVisualGroup,
   variant: number,
 ): string {
   const g = gender === 'male' ? 'm' : 'f'
-  return `${AVATAR_PREFIX}${g}:${ageGroup}:${variant}`
+  return `${AVATAR_PREFIX}${g}:${visualGroup}:${variant}`
 }
 
 export function parseAvatarId(
   id: string,
-): { gender: Gender; ageGroup: AgeGroup; variant: number } | null {
+): { gender: Gender; ageGroup: AvatarVisualGroup; variant: number } | null {
   if (!id.startsWith(AVATAR_PREFIX)) return null
   const parts = id.slice(AVATAR_PREFIX.length).split(':')
   if (parts.length !== 3) return null
@@ -40,7 +33,7 @@ export function parseAvatarId(
   if (!Number.isInteger(variant) || variant < 0 || variant > 2) return null
   return {
     gender: g === 'm' ? 'male' : 'female',
-    ageGroup: ageGroup as AgeGroup,
+    ageGroup: ageGroup as AvatarVisualGroup,
     variant,
   }
 }
@@ -50,8 +43,8 @@ export function isGeneratedAvatar(id: string): boolean {
 }
 
 export function getAvatarOptions(gender: Gender, age: number): string[] {
-  const ageGroup = getAgeGroup(age)
-  return [0, 1, 2].map((v) => makeAvatarId(gender, ageGroup, v))
+  const visualGroup = getAvatarVisualGroup(age)
+  return [0, 1, 2].map((v) => makeAvatarId(gender, visualGroup, v))
 }
 
 interface AvatarPalette {
@@ -61,7 +54,7 @@ interface AvatarPalette {
   accent: string
 }
 
-function palette(gender: Gender, ageGroup: AgeGroup, variant: number): AvatarPalette {
+function palette(gender: Gender, ageGroup: AvatarVisualGroup, variant: number): AvatarPalette {
   const skins = ['#f0d5be', '#ddb896', '#c68642']
   const hairMale = ['#2c1810', '#5c3d2e', '#1a1a2e']
   const hairFemale = ['#2c1810', '#8b5a3c', '#c9a66b']
@@ -80,13 +73,13 @@ function palette(gender: Gender, ageGroup: AgeGroup, variant: number): AvatarPal
   }
 }
 
-function headRadius(ageGroup: AgeGroup): number {
+function headRadius(ageGroup: AvatarVisualGroup): number {
   if (ageGroup === 'child') return 17
   if (ageGroup === 'elder') return 15
   return 16
 }
 
-function buildAvatarSvg(gender: Gender, ageGroup: AgeGroup, variant: number): string {
+function buildAvatarSvg(gender: Gender, ageGroup: AvatarVisualGroup, variant: number): string {
   const { skin, hair, shirt, accent } = palette(gender, ageGroup, variant)
   const r = headRadius(ageGroup)
   const cx = 32

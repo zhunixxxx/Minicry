@@ -24,14 +24,14 @@ function bothAlive(ctx: InteractionContext, state: GameState): boolean {
 
 function buildFlirtNarrative(actorName: string, targetName: string): string {
   const templates = [
-    `【浪漫】${actorName}对${targetName}说了几句暧昧的话，${targetName}神色微变，气氛悄然升温。`,
-    `【浪漫】${actorName}借故靠近${targetName}，言语间带着调笑，二人对视了一瞬。`,
+    `【浪漫】${actorName}对${targetName}说了几句逾矩的话，${targetName}神色微变，客厅里的空气悄然升温。`,
+    `【浪漫】${actorName}借故靠近${targetName}，言语间带着试探，二人对视了一瞬。`,
     `【浪漫】${actorName}对${targetName}出言调情，二人目光交汇，心照不宣。`,
     `【浪漫】${actorName}低声对${targetName}说了些什么，${targetName}别过脸去，耳根却红了。`,
-    `【浪漫】${actorName}与${targetName}独处片刻，言语间尽是试探与暗示，旁人无从知晓。`,
+    `【浪漫】${actorName}与${targetName}在花园独处片刻，言语间尽是暗示，所幸未遭仆役撞见。`,
     `【浪漫】${actorName}逗弄${targetName}几句，${targetName}嘴上推拒，眼里却有笑意。`,
     `【浪漫】${actorName}在${targetName}耳边轻声说了句话，${targetName}愣了一秒，随即别过视线。`,
-    `【浪漫】${actorName}与${targetName}目光纠缠片刻，谁都没有先开口，空气却热了起来。`,
+    `【浪漫】${actorName}与${targetName}在舞会后目光纠缠片刻，谁都没有先开口，空气却热了起来。`,
   ]
   return templates[Math.floor(Math.random() * templates.length)]
 }

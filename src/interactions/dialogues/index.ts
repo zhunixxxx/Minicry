@@ -20,6 +20,10 @@ import {
   buildProposeActorLine,
   buildProposeTargetLine,
 } from './proposeDialogues'
+import {
+  buildMarryActorLine,
+  buildMarryTargetLine,
+} from './marryDialogues'
 import { getInteractionTargets } from '../utils'
 
 export type InteractionDialogueBuilder = (
@@ -34,6 +38,7 @@ const dialogueBuilders: Partial<
   'friendly.groupChat': buildGroupChatDialogues,
   'romantic.flirt': buildFlirtDialogues,
   'marriage.propose': buildProposeDialogues,
+  'marriage.marry': buildMarryDialogues,
 }
 
 function buildGreetDialogues(
@@ -65,7 +70,7 @@ function buildGroupChatDialogues(
   if (!actor || targetIds.length < 2) return []
 
   const dialogues: InteractionDialogue[] = [
-    { characterId: ctx.actorId, text: buildGroupChatActorLine() },
+    { characterId: ctx.actorId, text: buildGroupChatActorLine(actor) },
   ]
 
   for (const id of targetIds) {
@@ -80,6 +85,26 @@ function buildGroupChatDialogues(
   return dialogues
 }
 
+function buildMarryDialogues(
+  ctx: InteractionContext,
+  state: GameState,
+): InteractionDialogue[] {
+  const actor = state.characters[ctx.actorId]
+  const target = state.characters[ctx.targetId]
+  if (!actor || !target) return []
+
+  return [
+    {
+      characterId: ctx.actorId,
+      text: buildMarryActorLine(actor, target),
+    },
+    {
+      characterId: ctx.targetId,
+      text: buildMarryTargetLine(actor, target),
+    },
+  ]
+}
+
 function buildProposeDialogues(
   ctx: InteractionContext,
   state: GameState,
@@ -91,7 +116,7 @@ function buildProposeDialogues(
   return [
     {
       characterId: ctx.actorId,
-      text: buildProposeActorLine(),
+      text: buildProposeActorLine(actor),
     },
     {
       characterId: ctx.targetId,

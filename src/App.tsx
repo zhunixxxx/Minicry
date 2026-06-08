@@ -44,7 +44,10 @@ import {
   buildMeetingStartEntry,
 } from './utils/meetingNarrative'
 import { executeInteraction } from './interactions/executeInteraction'
-import { dialoguesToReactions } from './interactions/dialogues'
+import {
+  buildInteractionDialogues,
+  dialoguesToReactions,
+} from './interactions/dialogues'
 import type { InteractionActionId, InteractionContext } from './types/interactions'
 import {
   interveneAdvanceTime,
@@ -219,6 +222,9 @@ export default function App() {
             characters: { ...prev.characters, ...result.state.characters },
             narrative: [...prev.narrative, result.entry],
           }))
+          if (result.entry.reactions) {
+            showReactions(result.entry.reactions)
+          }
         } else {
           setDivorceDraft(draft)
         }
@@ -250,6 +256,11 @@ export default function App() {
   const handleConfirmMarriage = useCallback(
     (confirm: MarriageConfirmInput) => {
       if (!marriageDraft) return
+      const ctx = {
+        actorId: marriageDraft.actorId,
+        targetId: marriageDraft.targetId,
+      }
+      const dialogues = buildInteractionDialogues('marriage.marry', ctx, state)
       const result = applyMarriage(state, marriageDraft, confirm)
       setState((prev) => ({
         ...prev,
@@ -259,9 +270,12 @@ export default function App() {
         focusedHouseId: result.joinedHouseId,
         treeFocusCharacterId: marriageDraft.actorId,
       }))
+      if (dialogues.length > 0) {
+        showReactions(dialoguesToReactions(dialogues))
+      }
       setMarriageDraft(null)
     },
-    [marriageDraft, state],
+    [marriageDraft, state, showReactions],
   )
 
   const handleConfirmDivorce = useCallback(
@@ -274,9 +288,12 @@ export default function App() {
         characters: { ...prev.characters, ...result.state.characters },
         narrative: [...prev.narrative, result.entry],
       }))
+      if (result.entry.reactions) {
+        showReactions(result.entry.reactions)
+      }
       setDivorceDraft(null)
     },
-    [divorceDraft, state],
+    [divorceDraft, state, showReactions],
   )
 
   const handleConfirmReproduction = useCallback(
@@ -289,9 +306,12 @@ export default function App() {
         characters: { ...prev.characters, ...result.state.characters },
         narrative: [...prev.narrative, result.entry],
       }))
+      if (result.entry.reactions) {
+        showReactions(result.entry.reactions)
+      }
       setReproductionDraft(null)
     },
-    [reproductionDraft, state],
+    [reproductionDraft, state, showReactions],
   )
 
   const clearSessionState = useCallback(() => {
@@ -321,7 +341,11 @@ export default function App() {
 
       await new Promise((r) => setTimeout(r, 600))
 
-      let result: { state: Partial<GameState>; entry: import('./types/game').NarrativeEntry }
+      let result: {
+        state: Partial<GameState>
+        entry: import('./types/game').NarrativeEntry
+        extraEntries?: import('./types/game').NarrativeEntry[]
+      }
 
       switch (action) {
         case 'advance_time':
@@ -348,7 +372,11 @@ export default function App() {
         ...prev,
         ...result.state,
         characters: { ...prev.characters, ...result.state.characters },
-        narrative: [...prev.narrative, result.entry],
+        narrative: [
+          ...prev.narrative,
+          ...(result.extraEntries ?? []),
+          result.entry,
+        ],
       }))
 
       if (result.entry.reactions) {
@@ -365,7 +393,7 @@ export default function App() {
       <header className="app-header">
         <div className="brand">
           <h1 className="brand-title">Minicry</h1>
-          <p className="brand-subtitle">叙事沙盒 · 王室纪事</p>
+          <p className="brand-subtitle">叙事沙盒</p>
         </div>
         <div className="header-center">
           <nav className="house-tabs">

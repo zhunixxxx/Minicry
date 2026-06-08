@@ -2,7 +2,7 @@ import type { GameState } from '../types/game'
 import { enrichNarrative } from '../utils/eventReactions'
 
 const rawInitialState: GameState = {
-  year: 1247,
+  year: 1840,
   month: 3,
   focusedHouseId: 'house-blackwood',
   selectedCharacterId: 'char-elena',
@@ -11,14 +11,14 @@ const rawInitialState: GameState = {
     'house-blackwood': {
       id: 'house-blackwood',
       name: '黑木家族',
-      motto: '厚植根本，行稳致远',
+      motto: '根植故土，世代相守',
       color: '#FF9F43',
       emblem: '🌲',
     },
     'house-silverveil': {
       id: 'house-silverveil',
       name: '银纱家族',
-      motto: '光耀所及，不负所托',
+      motto: '光耀门楣，不负先祖',
       color: '#54A0FF',
       emblem: '🌙',
     },
@@ -44,7 +44,7 @@ const rawInitialState: GameState = {
       spouseIds: ['char-mira'],
       isAlive: true,
       attributes: { diplomacy: 14, martial: 11, stewardship: 16, intrigue: 9, learning: 12 },
-      bio: '黑木家族的现任族长，以稳健治理著称。近年因边境争端与银纱家族关系紧张。',
+      bio: '约克郡黑木庄园的现任家主，上议院资深议员。近年因河道通行权与邻领银纱家族争执不休。',
     },
     'char-mira': {
       id: 'char-mira',
@@ -65,7 +65,7 @@ const rawInitialState: GameState = {
       spouseIds: ['char-aldrin'],
       isAlive: true,
       attributes: { diplomacy: 17, martial: 4, stewardship: 13, intrigue: 15, learning: 14 },
-      bio: '出身商界名门，嫁入黑木后成为家族事务的实际协调者，在公众中颇受欢迎。',
+      bio: '出身伦敦商贾之家，嫁入黑木后主持庄园内务与慈善晚宴，在乡绅圈中颇有体面。',
     },
     'char-elena': {
       id: 'char-elena',
@@ -77,7 +77,7 @@ const rawInitialState: GameState = {
       houseId: 'house-blackwood',
       avatar: '⚔️',
       traits: ['进取心强', '很有魅力', '急性子'],
-      preferences: ['击剑', '时政', '旅行'],
+      preferences: ['射箭', '时政', '旅行'],
       relations: [
         { targetId: 'char-aldrin', type: 'parent', label: '父亲' },
         { targetId: 'char-mira', type: 'parent', label: '母亲' },
@@ -89,7 +89,7 @@ const rawInitialState: GameState = {
       spouseIds: [],
       isAlive: true,
       attributes: { diplomacy: 18, martial: 15, stewardship: 10, intrigue: 16, learning: 11 },
-      bio: '被定为黑木继承人，渴望在公众面前证明自己。与银纱家族的继承人罗万有着不被允许的感情。',
+      bio: '被定为黑木继承人，渴望在伦敦社交季证明自己。与银纱家族的继承人罗万有着不被允许的感情。',
     },
     'char-cedric': {
       id: 'char-cedric',
@@ -100,7 +100,7 @@ const rawInitialState: GameState = {
       houseId: 'house-blackwood',
       avatar: '📜',
       traits: ['求知欲强', '敏感', '坦率'],
-      preferences: ['天文', '科技', '独处'],
+      preferences: ['天文', '铁路', '独处'],
       relations: [
         { targetId: 'char-aldrin', type: 'parent', label: '父亲' },
         { targetId: 'char-mira', type: 'parent', label: '母亲' },
@@ -110,7 +110,7 @@ const rawInitialState: GameState = {
       spouseIds: [],
       isAlive: true,
       attributes: { diplomacy: 8, martial: 5, stewardship: 9, intrigue: 6, learning: 20 },
-      bio: '对继承权兴趣寥寥，沉迷于大学与学术研究，被父亲视为「不够务实」。',
+      bio: '就读于牛津，沉迷自然哲学与铁路工程，被父亲斥为「不务正业」的次子。',
     },
     'char-rowan': {
       id: 'char-rowan',
@@ -122,7 +122,7 @@ const rawInitialState: GameState = {
       houseId: 'house-silverveil',
       avatar: '🗡️',
       traits: ['骄傲', '外表出众', '竞争心强'],
-      preferences: ['击剑', '派对', '时尚'],
+      preferences: ['狩猎', '社交', '时尚'],
       relations: [
         { targetId: 'char-elena', type: 'lover', label: '秘密恋人' },
         { targetId: 'char-aldrin', type: 'rival', label: '家族对手' },
@@ -133,7 +133,7 @@ const rawInitialState: GameState = {
       spouseIds: [],
       isAlive: true,
       attributes: { diplomacy: 12, martial: 19, stewardship: 8, intrigue: 13, learning: 7 },
-      bio: '银纱家族的骄傲，边境冲突中的强硬派。与艾琳娜的私情可能动摇两族和平。',
+      bio: '银纱庄园的继承人，狩猎场上的常客，在河道通行权争端中态度强硬。与艾琳娜的私情若曝光，足以震动两族。',
     },
     'char-lyra': {
       id: 'char-lyra',
@@ -154,7 +154,7 @@ const rawInitialState: GameState = {
       spouseIds: [],
       isAlive: true,
       attributes: { diplomacy: 16, martial: 6, stewardship: 7, intrigue: 19, learning: 12 },
-      bio: '表面随性，实则是家族情报网的核心。暗中协助艾琳娜与罗万传递消息。',
+      bio: '表面是社交季里无忧无虑的次女，实则替家族传递消息。暗中协助艾琳娜与罗万通信往来。',
     },
     'char-theron': {
       id: 'char-theron',
@@ -176,7 +176,7 @@ const rawInitialState: GameState = {
       spouseIds: ['char-isolde'],
       isAlive: true,
       attributes: { diplomacy: 10, martial: 14, stewardship: 18, intrigue: 17, learning: 9 },
-      bio: '银纱家族的铁腕族长，正筹划对黑木边境的一次决定性施压。',
+      bio: '银纱庄园的铁腕家主，正投资铁路支线并筹划对黑木领地施压。上议院里与奥德里恩针锋相对。',
     },
     'char-isolde': {
       id: 'char-isolde',
@@ -197,40 +197,43 @@ const rawInitialState: GameState = {
       spouseIds: ['char-theron'],
       isAlive: true,
       attributes: { diplomacy: 15, martial: 3, stewardship: 11, intrigue: 12, learning: 13 },
-      bio: '在公开场合维持家族体面，私下却知晓子女的禁忌之恋，尚未公开表态。',
+      bio: '在舞会与教堂义卖中维持家族体面，私下却知晓子女的禁忌之恋，尚未公开表态。',
     },
   },
   narrative: [
     {
       id: 'n-1',
-      year: 1247,
+      year: 1840,
       month: 1,
       type: 'system',
-      text: '【纪年 1247】黑木与银纱两大家族沿暮光河对峙已逾三代。边境检查站彻夜亮灯，媒体每天都在追踪最新动态。',
+      text: '【1840 年】维多利亚女王在位第三年。黑木与银纱两大家族沿暮光河比邻而居已逾三代，河道通行权与铁路征地之争令乡绅圈议论纷纷，《泰晤士报》亦时有报道。',
       characterIds: [],
     },
     {
       id: 'n-2',
-      year: 1247,
+      year: 1840,
       month: 2,
       type: 'event',
-      text: '艾琳娜在春季击剑公开赛上连赢三场，公爵奥德里恩当众宣布她为正式继承人。塞德里克坐在观众席，全程沉默。',
+      eventKind: 'story_preset',
+      text: '郡射箭大会上，艾琳娜连中三元。公爵奥德里恩于宴会厅当众宣布她为黑木庄园正式继承人。塞德里克坐在末席，全程沉默不语。',
       characterIds: ['char-elena', 'char-aldrin', 'char-cedric'],
     },
     {
       id: 'n-3',
-      year: 1247,
+      year: 1840,
       month: 3,
       type: 'event',
-      text: '莱拉以「贸易洽谈」为名到访黑木官邸。深夜，艾琳娜与罗万在后花园短暂相会——这次见面没有被任何记者拍到。',
+      eventKind: 'story_preset',
+      text: '莱拉以「羊毛贸易」为名拜访黑木庄园。入夜后，艾琳娜与罗万在后花园短暂相会——所幸未遭任何仆役撞见，《晨报》亦无从知晓。',
       characterIds: ['char-elena', 'char-rowan', 'char-lyra'],
     },
     {
       id: 'n-4',
-      year: 1247,
+      year: 1840,
       month: 3,
       type: 'event',
-      text: '银纱公爵塞隆下令加征边境关税。黑木商队被扣留三日，两族关系跌至冰点，舆论哗然。',
+      eventKind: 'story_preset',
+      text: '银纱公爵塞隆宣布提高暮光河渡口通行费。黑木庄园的三辆运货马车被扣留三日，两族关系跌至冰点，地方舆论哗然。',
       characterIds: ['char-theron', 'char-aldrin'],
     },
   ],
@@ -243,7 +246,7 @@ export const initialGameState: GameState = {
 
 /** 无家族、无人物的空白存档 */
 export const emptyGameState: GameState = {
-  year: 1247,
+  year: 1840,
   month: 1,
   focusedHouseId: '',
   selectedCharacterId: '',

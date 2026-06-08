@@ -6,7 +6,8 @@ import type {
   NarrativeEntry,
 } from '../types/game'
 import type { InteractionContext } from '../types/interactions'
-import { getAgeGroup, getAvatarOptions } from './avatars'
+import { getAvatarOptions } from './avatars'
+import { isChildAge } from './ageGroups'
 import {
   applyNewCharacter,
   DEFAULT_ATTRIBUTES,
@@ -15,6 +16,7 @@ import {
 import { isOppositeGender } from './gender'
 import { isRomanticPartner } from './romance'
 import { canRomanticInteract } from '../interactions/utils'
+import { enrichNarrativeEntry } from './eventReactions'
 
 export interface ReproductionDraft {
   actorId: string
@@ -84,7 +86,7 @@ export function canReproduce(
   if (!isRomanticPartner(ctx.actorId, ctx.targetId, state.characters)) {
     return false
   }
-  if (getAgeGroup(actor.age) === 'child' || getAgeGroup(target.age) === 'child') {
+  if (isChildAge(actor.age) || isChildAge(target.age)) {
     return false
   }
   return resolveParents(actor, target) !== null
@@ -104,7 +106,7 @@ export function reproduceDisabledReason(
   }
   if (!actor.isAlive) return '发起者已故'
   if (!target.isAlive) return '目标已故'
-  if (getAgeGroup(actor.age) === 'child' || getAgeGroup(target.age) === 'child') {
+  if (isChildAge(actor.age) || isChildAge(target.age)) {
     return '年幼者无法生育'
   }
   if (!canRomanticInteract(ctx, state)) return '当前情境下无法生育'
@@ -200,26 +202,34 @@ export function applyReproduction(
   const houseName = house?.name ?? '家族'
 
   const templates = [
-    `【浪漫】${childName}出生了，是${draft.fatherName}与${draft.motherName}的${childLabel}，登记加入${houseName}。${traitText}`,
-    `【浪漫】${draft.fatherName}与${draft.motherName}迎来新生儿${childName}，已在${houseName}完成登记。${traitText}`,
+    `【浪漫】${childName}出生了，是${draft.fatherName}与${draft.motherName}的${childLabel}，已在教区登记，加入${houseName}。${traitText}`,
+    `【浪漫】${draft.fatherName}与${draft.motherName}迎来新生儿${childName}，已在${houseName}庄园完成登记。${traitText}`,
     `【浪漫】${childName}降生，${draft.fatherName}与${draft.motherName}正式成为父母，孩子加入${houseName}。${traitText}`,
     `【浪漫】${houseName}再添新成员：${childName}，为${draft.fatherName}与${draft.motherName}之${childLabel}。${traitText}`,
-    `【浪漫】${draft.fatherName}与${draft.motherName}喜获${childLabel}${childName}，家族档案已更新。${traitText}`,
-    `【浪漫】新生儿${childName}出生，${draft.fatherName}与${draft.motherName}难掩喜悦，孩子登记加入${houseName}。${traitText}`,
-    `【浪漫】${childName}来到世间，${draft.fatherName}与${draft.motherName}的${childLabel}已在${houseName}入档。${traitText}`,
-    `【浪漫】${draft.fatherName}与${draft.motherName}宣布${childName}出生，${houseName}迎来新一代成员。${traitText}`,
+    `【浪漫】${draft.fatherName}与${draft.motherName}喜获${childLabel}${childName}，家族谱系已更新。${traitText}`,
+    `【浪漫】新生儿${childName}出生，${draft.fatherName}与${draft.motherName}难掩喜悦，已在教区登记入档。${traitText}`,
+    `【浪漫】${childName}来到世间，${draft.fatherName}与${draft.motherName}的${childLabel}已在${houseName}入册。${traitText}`,
+    `【浪漫】${draft.fatherName}与${draft.motherName}宣布${childName}出生，${houseName}庄园迎来新一代继承人。${traitText}`,
   ]
   const text = templates[Math.floor(Math.random() * templates.length)]
 
   return {
     state: result.state,
-    entry: {
-      id: `n-reproduce-${newCharId ?? Date.now()}`,
-      year: state.year,
-      month: state.month,
-      type: 'player',
-      text,
-      characterIds: result.entry.characterIds,
-    },
+    entry: enrichNarrativeEntry(
+      {
+        id: `n-reproduce-${newCharId ?? Date.now()}`,
+        year: state.year,
+        month: state.month,
+        type: 'player',
+        text,
+        characterIds: result.entry.characterIds,
+        eventKind: 'reproduction',
+        reactionContext: {
+          actorId: draft.fatherId,
+          targetId: draft.motherId,
+        },
+      },
+      state.characters,
+    ),
   }
 }

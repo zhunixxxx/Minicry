@@ -60,6 +60,29 @@ export interface House {
   emblem: string
 }
 
+/** 纪事事件分类，用于生成情境化气泡反应 */
+export type NarrativeEventKind =
+  | 'story_preset'
+  | 'ambient'
+  | 'meeting_start'
+  | 'meeting_end'
+  | 'marriage_propose'
+  | 'marriage_wedding'
+  | 'divorce_amicable'
+  | 'divorce_legal'
+  | 'reproduction'
+  | 'intervention_diplomacy'
+  | 'intervention_marriage'
+  | 'intervention_rivalry'
+  | 'intervention_custom'
+
+/** 生成气泡反应时的上下文（如发起者、目标） */
+export interface NarrativeReactionContext {
+  actorId?: string
+  targetId?: string
+  crossHouse?: boolean
+}
+
 export interface NarrativeEntry {
   id: string
   year: number
@@ -68,6 +91,8 @@ export interface NarrativeEntry {
   characterIds?: string[]
   reactions?: Record<string, string>
   type: 'event' | 'player' | 'system'
+  eventKind?: NarrativeEventKind
+  reactionContext?: NarrativeReactionContext
 }
 
 export type CharacterReactions = Record<string, string>

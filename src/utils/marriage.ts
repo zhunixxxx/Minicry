@@ -15,6 +15,7 @@ import {
 } from '../interactions/utils'
 import { formatCharacterName } from './createCharacter'
 import { getCharacterSurname, resolveParents } from './reproduction'
+import { enrichNarrativeEntry } from './eventReactions'
 
 function addRelation(
   relations: Relation[],
@@ -171,10 +172,10 @@ function nextProposeId(): string {
 function buildProposeNarrative(actorName: string, targetName: string): string {
   const templates = [
     `【婚姻】${actorName}郑重向${targetName}求婚，${targetName}答应了，二人正式订婚。`,
-    `【婚姻】${actorName}单膝跪地，向${targetName}递出戒指。对方点头应允，婚约成立。`,
+    `【婚姻】${actorName}在客厅里向${targetName}坦陈心意，对方点头应允，婚约成立。`,
     `【婚姻】${actorName}与${targetName}在亲友见证下互许终身，正式订立婚约。`,
-    `【婚姻】${actorName}在私密场合向${targetName}求婚，${targetName}含泪应允，消息很快传开。`,
-    `【婚姻】${actorName}将戒指递给${targetName}，问出那句期待已久的话。${targetName}伸手接过，二人订婚。`,
+    `【婚姻】${actorName}在私密场合向${targetName}求婚，${targetName}含泪应允，消息很快传遍乡绅圈。`,
+    `【婚姻】${actorName}将订婚戒指递给${targetName}，问出那句期待已久的话。${targetName}伸手接过，二人订婚。`,
     `【婚姻】${actorName}与${targetName}在晚宴后单独相处，${actorName}正式提出婚约，${targetName}欣然答应。`,
     `【婚姻】${actorName}向${targetName}坦陈心意，请求携手共度余生。${targetName}沉默片刻，随后点头应允。`,
     `【婚姻】${actorName}与${targetName}在花园散步时，${actorName}突然停下脚步求婚。${targetName}答允，婚约既成。`,
@@ -205,14 +206,19 @@ export function applyProposal(
 
   return {
     state: { characters: updatedCharacters },
-    entry: {
-      id: nextProposeId(),
-      year: state.year,
-      month: state.month,
-      type: 'player',
-      text: buildProposeNarrative(actor.name, target.name),
-      characterIds: [ctx.actorId, ctx.targetId],
-    },
+    entry: enrichNarrativeEntry(
+      {
+        id: nextProposeId(),
+        year: state.year,
+        month: state.month,
+        type: 'player',
+        text: buildProposeNarrative(actor.name, target.name),
+        characterIds: [ctx.actorId, ctx.targetId],
+        eventKind: 'marriage_propose',
+        reactionContext: { actorId: ctx.actorId, targetId: ctx.targetId },
+      },
+      state.characters,
+    ),
   }
 }
 
@@ -377,14 +383,14 @@ function buildMarryNarrative(
 ): string {
   const suffix = `${joinText}${childrenText}`
   const templates = [
-    `【婚姻】${actorName}与${targetName}在${houseName}举行婚礼，正式完婚${suffix}。`,
+    `【婚姻】${actorName}与${targetName}在${houseName}庄园教堂举行婚礼，正式完婚${suffix}。`,
     `【婚姻】${actorName}与${targetName}在${houseName}完成婚礼仪式，亲友见证，正式成为夫妻${suffix}。`,
-    `【婚姻】${houseName}为${actorName}与${targetName}举办婚礼，二人交换誓言，正式完婚${suffix}。`,
-    `【婚姻】${actorName}与${targetName}在${houseName}的婚礼圆满礼成，媒体争相报道${suffix}。`,
-    `【婚姻】${actorName}与${targetName}在${houseName}步入婚礼殿堂，在众人祝福中完婚${suffix}。`,
+    `【婚姻】${houseName}为${actorName}与${targetName}举办婚礼，二人在牧师面前交换誓言，正式完婚${suffix}。`,
+    `【婚姻】${actorName}与${targetName}在${houseName}的婚礼圆满礼成，《泰晤士报》社会版亦有报道${suffix}。`,
+    `【婚姻】${actorName}与${targetName}在${houseName}步入教堂，在众人祝福中完婚${suffix}。`,
     `【婚姻】${houseName}张灯结彩，${actorName}与${targetName}在此举行婚礼，正式结为夫妻${suffix}。`,
     `【婚姻】${actorName}与${targetName}在${houseName}交换戒指，婚礼礼成${suffix}。`,
-    `【婚姻】${actorName}与${targetName}在${houseName}举办婚礼，仪式庄重而温馨，二人正式完婚${suffix}。`,
+    `【婚姻】${actorName}与${targetName}在${houseName}举办婚礼，仪式庄重而温馨，已在教区登记${suffix}。`,
   ]
   return templates[Math.floor(Math.random() * templates.length)]
 }
@@ -693,10 +699,10 @@ function buildDivorceNarrative(
   returnText: string,
 ): string {
   const amicableBases = [
-    `【婚姻】${actorName}与${targetName}协议离婚，二人自此各奔东西，仍愿保持友好。`,
-    `【婚姻】${actorName}与${targetName}经协商一致，和平解除婚姻，彼此祝福。`,
-    `【婚姻】${actorName}与${targetName}签署离婚协议，体面分手，仍保留私人情谊。`,
-    `【婚姻】${actorName}与${targetName}在律师见证下协议离婚，过程平和，无公开冲突。`,
+    `【婚姻】${actorName}与${targetName}协议分居，二人自此各奔东西，仍愿保持友好。`,
+    `【婚姻】${actorName}与${targetName}经协商一致，体面解除婚姻，彼此祝福。`,
+    `【婚姻】${actorName}与${targetName}签署分居协议，体面分手，仍保留私人情谊。`,
+    `【婚姻】${actorName}与${targetName}在律师见证下协议离婚，过程平和，未惊动乡绅圈。`,
     `【婚姻】${actorName}与${targetName}决定结束婚姻，双方声明仍将保持友好关系。`,
     `【婚姻】${actorName}与${targetName}平静办理离婚手续，对外表示「仍是朋友」。`,
     `【婚姻】${actorName}与${targetName}协商离婚，手续顺利，未引发舆论风波。`,
@@ -705,11 +711,11 @@ function buildDivorceNarrative(
   const legalBases = [
     `【婚姻】${actorName}与${targetName}走上法庭，最终以判决离婚收场，彼此形同陌路。`,
     `【婚姻】${actorName}与${targetName}对簿公堂，经法院判决离婚，二人公开交恶。`,
-    `【婚姻】${actorName}与${targetName}的法律离婚历时数月，最终以法庭判决告终，关系彻底破裂。`,
-    `【婚姻】${actorName}与${targetName}因离婚对簿公堂，媒体全程跟踪，二人此后形同陌路。`,
+    `【婚姻】${actorName}与${targetName}的离婚官司历时数月，最终以法庭判决告终，关系彻底破裂。`,
+    `【婚姻】${actorName}与${targetName}因离婚对簿公堂，《泰晤士报》全程报道，二人此后形同陌路。`,
     `【婚姻】${actorName}与${targetName}经法院判决离婚，双方律师各执一词，场面颇为难看。`,
     `【婚姻】${actorName}与${targetName}的离婚官司尘埃落定，判决结果公开，二人再未同框。`,
-    `【婚姻】${actorName}与${targetName}走上法庭争夺权益，最终以判决离婚收场，彼此不再往来。`,
+    `【婚姻】${actorName}与${targetName}走上法庭争夺嫁妆与财产，最终以判决离婚收场，彼此不再往来。`,
     `【婚姻】${actorName}与${targetName}经法院裁定离婚，声明中措辞冰冷，关系彻底终结。`,
   ]
   const bases = kind === 'amicable' ? amicableBases : legalBases
@@ -825,25 +831,34 @@ export function applyDivorce(
 
   return {
     state: { characters: updatedCharacters },
-    entry: {
-      id: nextDivorceId(),
-      year: state.year,
-      month: state.month,
-      type: 'player',
-      text: buildDivorceNarrative(
-        draft.kind,
-        draft.actorName,
-        draft.targetName,
-        preMaritalText,
-        sharedText,
-        returnText,
-      ),
-      characterIds: [
-        draft.actorId,
-        draft.targetId,
-        ...preMarital.map((p) => p.childId),
-        ...Object.keys(confirm.childCustody),
-      ],
-    },
+    entry: enrichNarrativeEntry(
+      {
+        id: nextDivorceId(),
+        year: state.year,
+        month: state.month,
+        type: 'player',
+        text: buildDivorceNarrative(
+          draft.kind,
+          draft.actorName,
+          draft.targetName,
+          preMaritalText,
+          sharedText,
+          returnText,
+        ),
+        characterIds: [
+          draft.actorId,
+          draft.targetId,
+          ...preMarital.map((p) => p.childId),
+          ...Object.keys(confirm.childCustody),
+        ],
+        eventKind:
+          draft.kind === 'amicable' ? 'divorce_amicable' : 'divorce_legal',
+        reactionContext: {
+          actorId: draft.actorId,
+          targetId: draft.targetId,
+        },
+      },
+      state.characters,
+    ),
   }
 }
