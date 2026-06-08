@@ -4,6 +4,8 @@ export type RelationType =
   | 'parent'
   | 'child'
   | 'spouse'
+  | 'ex_spouse'
+  | 'engaged'
   | 'sibling'
   | 'lover'
   | 'rival'
@@ -32,7 +34,13 @@ export interface Character {
   age: number
   gender: Gender
   title: string
+  /** 被指定为继承人的家族；离族后应清除 */
+  heirOfHouseId?: string
   houseId: string
+  /** 原籍家族；跨族入赘/出嫁后保留，离婚时归返 */
+  nativeHouseId?: string
+  /** 原籍姓氏，与 nativeHouseId 对应 */
+  nativeSurname?: string
   avatar: string
   traits: string[]
   preferences: string[]

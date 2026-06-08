@@ -7,9 +7,19 @@ import type {
 import type { GameState } from '../types/game'
 import { friendlyGreetAction } from './actions/friendlyGreet'
 import { friendlyGroupChatAction } from './actions/friendlyGroupChat'
+import { marriageDivorceAmicableAction } from './actions/marriageDivorceAmicable'
+import { marriageDivorceLegalAction } from './actions/marriageDivorceLegal'
+import { marriageMarryAction } from './actions/marriageMarry'
+import { marriageProposeAction } from './actions/marriagePropose'
+import { isMarriedTo } from '../utils/marriage'
 import { romanticFlirtAction } from './actions/romanticFlirt'
 import { romanticReproduceAction } from './actions/romanticReproduce'
-import { canFriendlyInteract, canRomanticInteract, isMultiTargetContext } from './utils'
+import {
+  canFriendlyInteract,
+  canMarriageInteract,
+  canRomanticInteract,
+  isMultiTargetContext,
+} from './utils'
 
 /** 所有已注册的可执行动作 */
 export const INTERACTION_ACTIONS: InteractionActionHandler[] = [
@@ -17,6 +27,10 @@ export const INTERACTION_ACTIONS: InteractionActionHandler[] = [
   friendlyGroupChatAction,
   romanticFlirtAction,
   romanticReproduceAction,
+  marriageProposeAction,
+  marriageMarryAction,
+  marriageDivorceAmicableAction,
+  marriageDivorceLegalAction,
 ]
 
 const actionById = new Map<InteractionActionId, InteractionActionHandler>(
@@ -70,6 +84,43 @@ export const INTERACTION_MENU_ROOT: InteractionMenuItem[] = [
       },
     ],
   },
+  {
+    id: 'marriage',
+    label: '婚姻',
+    kind: 'category',
+    children: [
+      {
+        id: 'marriage-propose',
+        label: '求婚',
+        kind: 'action',
+        actionId: 'marriage.propose',
+        scope: 'single',
+      },
+      {
+        id: 'marriage-marry',
+        label: '结婚',
+        kind: 'action',
+        actionId: 'marriage.marry',
+        scope: 'single',
+      },
+      {
+        id: 'marriage-divorce-amicable',
+        label: '协议离婚',
+        kind: 'action',
+        actionId: 'marriage.divorceAmicable',
+        scope: 'single',
+        marriedOnly: true,
+      },
+      {
+        id: 'marriage-divorce-legal',
+        label: '法律离婚',
+        kind: 'action',
+        actionId: 'marriage.divorceLegal',
+        scope: 'single',
+        marriedOnly: true,
+      },
+    ],
+  },
 ]
 
 export function getInteractionAction(
@@ -99,46 +150,43 @@ function resolveMenuItem(
 
     if (children.length === 0) return null
 
-    const allDisabled = children.every((c) => c.disabled)
-    return {
-      ...item,
-      children,
-      disabled: allDisabled,
-      disabledReason: allDisabled ? '该分类下暂无可用行动' : undefined,
-    }
+    return { ...item, children }
   }
 
   if (item.kind === 'action') {
     if (!matchesScope(item, ctx)) return null
 
+    if (
+      item.marriedOnly &&
+      !isMarriedTo(ctx.actorId, ctx.targetId, state.characters)
+    ) {
+      return null
+    }
+
     if (item.actionId) {
       const handler = getInteractionAction(item.actionId)
-      if (!handler) {
-        return { ...item, disabled: true, disabledReason: '动作未注册' }
-      }
-      const can = handler.canExecute(ctx, state)
-      return {
-        ...item,
-        disabled: !can,
-        disabledReason: can ? undefined : handler.disabledReason?.(ctx, state),
-      }
+      if (!handler) return null
+      if (!handler.canExecute(ctx, state)) return null
+      return item
     }
   }
 
   return item
 }
 
-/** 根据当前上下文生成可用菜单（含 disabled 状态） */
+/** 根据当前上下文生成可用菜单（不可执行项不展示） */
 export function buildInteractionMenu(
   ctx: InteractionContext,
   state: GameState,
 ): InteractionMenuItem[] {
   const allowFriendly = canFriendlyInteract(ctx, state)
   const allowRomantic = canRomanticInteract(ctx, state)
+  const allowMarriage = canMarriageInteract(ctx, state)
 
   return INTERACTION_MENU_ROOT.filter((item) => {
     if (item.id === 'friendly') return allowFriendly
     if (item.id === 'romantic') return allowRomantic
+    if (item.id === 'marriage') return allowMarriage
     return true
   })
     .map((item) => resolveMenuItem(item, ctx, state))

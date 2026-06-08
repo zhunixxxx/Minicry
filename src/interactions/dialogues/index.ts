@@ -16,6 +16,10 @@ import {
   buildFlirtActorLine,
   buildFlirtTargetLine,
 } from './flirtDialogues'
+import {
+  buildProposeActorLine,
+  buildProposeTargetLine,
+} from './proposeDialogues'
 import { getInteractionTargets } from '../utils'
 
 export type InteractionDialogueBuilder = (
@@ -29,6 +33,7 @@ const dialogueBuilders: Partial<
   'friendly.greet': buildGreetDialogues,
   'friendly.groupChat': buildGroupChatDialogues,
   'romantic.flirt': buildFlirtDialogues,
+  'marriage.propose': buildProposeDialogues,
 }
 
 function buildGreetDialogues(
@@ -73,6 +78,26 @@ function buildGroupChatDialogues(
   }
 
   return dialogues
+}
+
+function buildProposeDialogues(
+  ctx: InteractionContext,
+  state: GameState,
+): InteractionDialogue[] {
+  const actor = state.characters[ctx.actorId]
+  const target = state.characters[ctx.targetId]
+  if (!actor || !target) return []
+
+  return [
+    {
+      characterId: ctx.actorId,
+      text: buildProposeActorLine(),
+    },
+    {
+      characterId: ctx.targetId,
+      text: buildProposeTargetLine(actor, target),
+    },
+  ]
 }
 
 function buildFlirtDialogues(

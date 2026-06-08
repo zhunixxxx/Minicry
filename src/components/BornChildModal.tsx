@@ -48,6 +48,7 @@ export function BornChildModal({
 
   const fatherHouse = state.houses[draft.fatherHouseId]
   const motherHouse = state.houses[draft.motherHouseId]
+  const sameHouse = draft.fatherHouseId === draft.motherHouseId
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -127,46 +128,73 @@ export function BornChildModal({
               <div className="form-field form-field--full">
                 <span>入籍家族 *</span>
                 <div className="house-choice-list">
-                  <label className="house-choice-item">
-                    <input
-                      type="radio"
-                      name="houseId"
-                      value={draft.fatherHouseId}
-                      checked={houseId === draft.fatherHouseId}
-                      onChange={() => {
-                        setHouseId(draft.fatherHouseId)
-                        setSurname(surnameForHouse(draft, draft.fatherHouseId))
-                      }}
-                    />
-                    <span className="house-choice-text">
-                      <span className="house-choice-name">
-                        {fatherHouse?.emblem} {fatherHouse?.name ?? '父方家族'}
+                  {sameHouse ? (
+                    <label className="house-choice-item">
+                      <input
+                        type="radio"
+                        name="houseId"
+                        value={draft.fatherHouseId}
+                        checked={houseId === draft.fatherHouseId}
+                        onChange={() => {
+                          setHouseId(draft.fatherHouseId)
+                          setSurname(surnameForHouse(draft, draft.fatherHouseId))
+                        }}
+                      />
+                      <span className="house-choice-text">
+                        <span className="house-choice-name">
+                          {fatherHouse?.emblem} {fatherHouse?.name ?? '本族'}
+                        </span>
+                        <span className="form-hint-inline">
+                          父：{draft.fatherName} · 母：{draft.motherName}
+                        </span>
                       </span>
-                      <span className="form-hint-inline">
-                        父：{draft.fatherName}
-                      </span>
-                    </span>
-                  </label>
-                  <label className="house-choice-item">
-                    <input
-                      type="radio"
-                      name="houseId"
-                      value={draft.motherHouseId}
-                      checked={houseId === draft.motherHouseId}
-                      onChange={() => {
-                        setHouseId(draft.motherHouseId)
-                        setSurname(surnameForHouse(draft, draft.motherHouseId))
-                      }}
-                    />
-                    <span className="house-choice-text">
-                      <span className="house-choice-name">
-                        {motherHouse?.emblem} {motherHouse?.name ?? '母方家族'}
-                      </span>
-                      <span className="form-hint-inline">
-                        母：{draft.motherName}
-                      </span>
-                    </span>
-                  </label>
+                    </label>
+                  ) : (
+                    <>
+                      <label className="house-choice-item">
+                        <input
+                          type="radio"
+                          name="houseId"
+                          value={draft.fatherHouseId}
+                          checked={houseId === draft.fatherHouseId}
+                          onChange={() => {
+                            setHouseId(draft.fatherHouseId)
+                            setSurname(surnameForHouse(draft, draft.fatherHouseId))
+                          }}
+                        />
+                        <span className="house-choice-text">
+                          <span className="house-choice-name">
+                            {fatherHouse?.emblem}{' '}
+                            {fatherHouse?.name ?? '父方家族'}
+                          </span>
+                          <span className="form-hint-inline">
+                            父：{draft.fatherName}
+                          </span>
+                        </span>
+                      </label>
+                      <label className="house-choice-item">
+                        <input
+                          type="radio"
+                          name="houseId"
+                          value={draft.motherHouseId}
+                          checked={houseId === draft.motherHouseId}
+                          onChange={() => {
+                            setHouseId(draft.motherHouseId)
+                            setSurname(surnameForHouse(draft, draft.motherHouseId))
+                          }}
+                        />
+                        <span className="house-choice-text">
+                          <span className="house-choice-name">
+                            {motherHouse?.emblem}{' '}
+                            {motherHouse?.name ?? '母方家族'}
+                          </span>
+                          <span className="form-hint-inline">
+                            母：{draft.motherName}
+                          </span>
+                        </span>
+                      </label>
+                    </>
+                  )}
                 </div>
               </div>
             </div>

@@ -38,7 +38,11 @@ export function CharacterPanel({
   }, [character.id])
 
   const events = character.relations.filter(
-    (r) => r.type === 'rival' || r.type === 'lover' || r.type === 'ally',
+    (r) =>
+      r.type === 'rival' ||
+      r.type === 'lover' ||
+      r.type === 'engaged' ||
+      r.type === 'ally',
   )
 
   return (

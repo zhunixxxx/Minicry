@@ -86,6 +86,8 @@ export function buildCharacterFromInput(
     gender: input.gender,
     title: input.title.trim() || '族人',
     houseId: input.houseId,
+    nativeHouseId: input.houseId,
+    nativeSurname: surname,
     avatar: input.avatar.trim() || '👤',
     traits: input.traits,
     preferences: input.preferences,

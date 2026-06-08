@@ -6,6 +6,10 @@ export type InteractionActionId =
   | 'friendly.groupChat'
   | 'romantic.flirt'
   | 'romantic.reproduce'
+  | 'marriage.propose'
+  | 'marriage.marry'
+  | 'marriage.divorceAmicable'
+  | 'marriage.divorceLegal'
   | (string & {})
 
 export type InteractionScope = 'single' | 'multi'
@@ -40,6 +44,8 @@ export interface InteractionMenuItem {
   actionId?: InteractionActionId
   /** 单人 / 多人互动范围（默认 single） */
   scope?: InteractionScope
+  /** 仅在与目标存在婚姻关系时显示 */
+  marriedOnly?: boolean
   disabled?: boolean
   disabledReason?: string
 }
@@ -53,6 +59,8 @@ export interface InteractionResult {
   entry: NarrativeEntry
   /** 互动专属台词，显示在家谱舞台角色气泡上 */
   dialogues?: InteractionDialogue[]
+  /** 互动导致的状态变更（如订婚关系） */
+  state?: Partial<GameState>
 }
 
 export interface InteractionActionHandler {

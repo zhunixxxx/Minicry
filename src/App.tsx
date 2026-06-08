@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react'
 import { CharacterPanel } from './components/CharacterPanel'
 import { BornChildModal } from './components/BornChildModal'
+import { DivorceCustodyModal } from './components/DivorceCustodyModal'
+import { MarriageHouseModal } from './components/MarriageHouseModal'
 import { CreateCharacterModal } from './components/CreateCharacterModal'
 import { FamilyTreeStage } from './components/FamilyTreeStage'
 import { InterventionPanel } from './components/InterventionPanel'
@@ -15,6 +17,16 @@ import type {
 } from './types/game'
 import { applyNewCharacter } from './utils/createCharacter'
 import { getInitialGameState, saveGameState } from './utils/gameStorage'
+import {
+  applyDivorce,
+  applyMarriage,
+  prepareDivorceDraft,
+  prepareMarriageDraft,
+  type DivorceConfirmInput,
+  type DivorceDraft,
+  type MarriageConfirmInput,
+  type MarriageDraft,
+} from './utils/marriage'
 import {
   applyReproduction,
   prepareReproductionDraft,
@@ -61,6 +73,8 @@ export default function App() {
   const [createModalOpen, setCreateModalOpen] = useState(false)
   const [reproductionDraft, setReproductionDraft] =
     useState<ReproductionDraft | null>(null)
+  const [marriageDraft, setMarriageDraft] = useState<MarriageDraft | null>(null)
+  const [divorceDraft, setDivorceDraft] = useState<DivorceDraft | null>(null)
   const [meetingSession, setMeetingSession] = useState<MeetingSession | null>(null)
   const reactionTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined)
 
@@ -175,10 +189,42 @@ export default function App() {
         return
       }
 
+      if (actionId === 'marriage.marry') {
+        const draft = prepareMarriageDraft(ctx, state)
+        if (draft) setMarriageDraft(draft)
+        return
+      }
+
+      if (
+        actionId === 'marriage.divorceAmicable' ||
+        actionId === 'marriage.divorceLegal'
+      ) {
+        const kind =
+          actionId === 'marriage.divorceAmicable' ? 'amicable' : 'legal'
+        const draft = prepareDivorceDraft(ctx, state, kind)
+        if (!draft) return
+        if (draft.sharedChildren.length === 0) {
+          const result = applyDivorce(state, draft, { childCustody: {} })
+          setState((prev) => ({
+            ...prev,
+            ...result.state,
+            characters: { ...prev.characters, ...result.state.characters },
+            narrative: [...prev.narrative, result.entry],
+          }))
+        } else {
+          setDivorceDraft(draft)
+        }
+        return
+      }
+
       try {
         const result = executeInteraction(actionId, ctx, state)
         setState((prev) => ({
           ...prev,
+          ...result.state,
+          characters: result.state?.characters
+            ? { ...prev.characters, ...result.state.characters }
+            : prev.characters,
           narrative: [...prev.narrative, result.entry],
         }))
         if (result.dialogues?.length) {
@@ -191,6 +237,38 @@ export default function App() {
       }
     },
     [state, showReactions],
+  )
+
+  const handleConfirmMarriage = useCallback(
+    (confirm: MarriageConfirmInput) => {
+      if (!marriageDraft) return
+      const result = applyMarriage(state, marriageDraft, confirm)
+      setState((prev) => ({
+        ...prev,
+        ...result.state,
+        characters: { ...prev.characters, ...result.state.characters },
+        narrative: [...prev.narrative, result.entry],
+        focusedHouseId: result.joinedHouseId,
+        treeFocusCharacterId: marriageDraft.actorId,
+      }))
+      setMarriageDraft(null)
+    },
+    [marriageDraft, state],
+  )
+
+  const handleConfirmDivorce = useCallback(
+    (confirm: DivorceConfirmInput) => {
+      if (!divorceDraft) return
+      const result = applyDivorce(state, divorceDraft, confirm)
+      setState((prev) => ({
+        ...prev,
+        ...result.state,
+        characters: { ...prev.characters, ...result.state.characters },
+        narrative: [...prev.narrative, result.entry],
+      }))
+      setDivorceDraft(null)
+    },
+    [divorceDraft, state],
   )
 
   const handleConfirmReproduction = useCallback(
@@ -301,6 +379,20 @@ export default function App() {
         draft={reproductionDraft}
         state={state}
         onConfirm={handleConfirmReproduction}
+      />
+
+      <MarriageHouseModal
+        open={marriageDraft !== null}
+        draft={marriageDraft}
+        state={state}
+        onConfirm={handleConfirmMarriage}
+      />
+
+      <DivorceCustodyModal
+        open={divorceDraft !== null}
+        draft={divorceDraft}
+        state={state}
+        onConfirm={handleConfirmDivorce}
       />
 
       <div className="game-layout">

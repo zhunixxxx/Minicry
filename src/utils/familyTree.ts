@@ -463,6 +463,8 @@ export function getRelationLabel(type: string): string {
     parent: '父母',
     child: '子女',
     spouse: '配偶',
+    ex_spouse: '前夫/妻',
+    engaged: '未婚夫/妻',
     sibling: '兄弟姐妹',
     lover: '恋人',
     rival: '对手',

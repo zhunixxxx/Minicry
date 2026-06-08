@@ -71,6 +71,21 @@ export function canRomanticInteract(
   return !areCloseBloodRelatives(ctx.actorId, ctx.targetId, state.characters)
 }
 
+/** 婚姻互动与浪漫互动适用相同情境规则 */
+export function canMarriageInteract(
+  ctx: InteractionContext,
+  state: GameState,
+): boolean {
+  return canRomanticInteract(ctx, state)
+}
+
+export function marriageInteractDisabledReason(
+  ctx: InteractionContext,
+  state: GameState,
+): string {
+  return romanticInteractDisabledReason(ctx, state)
+}
+
 export function romanticInteractDisabledReason(
   ctx: InteractionContext,
   state: GameState,
