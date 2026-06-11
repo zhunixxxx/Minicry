@@ -4,6 +4,7 @@ import type {
   InteractionResult,
 } from '../../types/interactions'
 import type { GameState } from '../../types/game'
+import { applyBondDeltaToCharacters } from '../../utils/relationshipBonds'
 import {
   canRomanticInteract,
   romanticInteractDisabledReason,
@@ -67,7 +68,16 @@ export const romanticFlirtAction: InteractionActionHandler = {
       throw new Error('Interaction actors not found')
     }
 
+    let characters = { ...state.characters }
+    characters = applyBondDeltaToCharacters(characters, ctx.actorId, ctx.targetId, {
+      romance: 8,
+    })
+    characters = applyBondDeltaToCharacters(characters, ctx.targetId, ctx.actorId, {
+      romance: 3,
+    })
+
     return {
+      state: { characters },
       entry: {
         id: nextId(),
         year: state.year,

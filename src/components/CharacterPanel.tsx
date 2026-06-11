@@ -2,8 +2,14 @@ import { useEffect, useRef } from 'react'
 import type { Character, House } from '../types/game'
 import { CharacterLink } from './CharacterLink'
 import { CharacterAvatar } from './CharacterAvatar'
+import { RelationshipBondBars } from './RelationshipBondBars'
 import { getRelationLabel } from '../utils/familyTree'
 import { linkifyCharacterNames } from '../utils/linkifyNames'
+import {
+  getBond,
+  getBondPartnerIds,
+  getKinshipRelations,
+} from '../utils/relationshipBonds'
 
 interface Props {
   character?: Character
@@ -53,13 +59,8 @@ export function CharacterPanel({
     )
   }
 
-  const events = character.relations.filter(
-    (r) =>
-      r.type === 'rival' ||
-      r.type === 'lover' ||
-      r.type === 'engaged' ||
-      r.type === 'ally',
-  )
+  const kinshipRelations = getKinshipRelations(character)
+  const bondPartnerIds = getBondPartnerIds(character.id, characters)
 
   return (
     <aside className="panel character-panel" ref={panelRef}>
@@ -148,50 +149,60 @@ export function CharacterPanel({
         </div>
       </section>
 
-      <section className="info-section">
-        <h3>关系网络</h3>
-        <ul className="relation-list">
-          {character.relations.map((rel) => {
-            const target = characters[rel.targetId]
-            if (!target) return null
-            return (
-              <li key={`${rel.targetId}-${rel.type}`} className="relation-item">
-                <span className="relation-type">
-                  {rel.label ?? getRelationLabel(rel.type)}
-                </span>
-                <CharacterLink
-                  name={target.name}
-                  onClick={() => onSelectCharacter(target.id)}
-                  className="relation-name"
-                />
-              </li>
-            )
-          })}
-        </ul>
-      </section>
-
-      {events.length > 0 && (
+      {kinshipRelations.length > 0 && (
         <section className="info-section">
-          <h3>关键事件</h3>
-          <ul className="event-list">
-            {events.map((rel) => {
+          <h3>亲缘关系</h3>
+          <ul className="relation-list">
+            {kinshipRelations.map((rel) => {
               const target = characters[rel.targetId]
+              if (!target) return null
               return (
-                <li key={rel.targetId} className="event-item">
-                  与{' '}
-                  {target ? (
-                    <CharacterLink
-                      name={target.name}
-                      onClick={() => onSelectCharacter(target.id)}
-                    />
-                  ) : null}{' '}
-                  的{rel.label ?? getRelationLabel(rel.type)}关系
+                <li key={`${rel.targetId}-${rel.type}`} className="relation-item">
+                  <span className="relation-type">
+                    {rel.label ?? getRelationLabel(rel.type)}
+                  </span>
+                  <CharacterLink
+                    name={target.name}
+                    onClick={() => onSelectCharacter(target.id)}
+                    className="relation-name"
+                  />
                 </li>
               )
             })}
           </ul>
         </section>
       )}
+
+      <section className="info-section">
+        <h3>情感关系</h3>
+        {bondPartnerIds.length === 0 ? (
+          <p className="bond-empty-hint">暂无显著的情感往来记录。</p>
+        ) : (
+          <ul className="bond-partner-list">
+            {bondPartnerIds.map((partnerId) => {
+              const partner = characters[partnerId]
+              if (!partner) return null
+              const outgoing = getBond(character, partnerId)
+              const incoming = getBond(partner, character.id)
+              return (
+                <li key={partnerId} className="bond-partner-item">
+                  <CharacterLink
+                    name={partner.name}
+                    onClick={() => onSelectCharacter(partner.id)}
+                    className="bond-partner-name"
+                  />
+                  <RelationshipBondBars
+                    outgoingFriendship={outgoing.friendship}
+                    outgoingRomance={outgoing.romance}
+                    incomingFriendship={incoming.friendship}
+                    incomingRomance={incoming.romance}
+                  />
+                </li>
+              )
+            })}
+          </ul>
+        )}
+      </section>
 
       <section className="info-section bio-section">
         <h3>人物传记</h3>

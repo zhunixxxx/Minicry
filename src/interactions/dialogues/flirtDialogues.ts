@@ -5,15 +5,21 @@ import {
   pick,
   pickSpeechLine,
 } from '../../utils/ageSpeech'
+import { MUTUAL_ROMANCE_THRESHOLD, getRomanceLevel } from '../../utils/relationshipBonds'
 
 function shortName(char: Character): string {
   return char.nickname || char.name.split('·')[0] || char.name
 }
 
-function isLoverOf(actor: Character, target: Character): boolean {
-  return actor.relations.some(
-    (r) => r.targetId === target.id && r.type === 'lover',
+function hasMutualRomance(actor: Character, target: Character): boolean {
+  return (
+    getRomanceLevel(actor, target.id) >= MUTUAL_ROMANCE_THRESHOLD &&
+    getRomanceLevel(target, actor.id) >= MUTUAL_ROMANCE_THRESHOLD
   )
+}
+
+function hasRomanticFeelings(actor: Character, target: Character): boolean {
+  return getRomanceLevel(actor, target.id) >= MUTUAL_ROMANCE_THRESHOLD
 }
 
 const ACTOR_TRAIT_LINES: Record<string, string[]> = {
@@ -132,7 +138,10 @@ export function buildFlirtActorLine(
   actor: Character,
   target: Character,
 ): string {
-  if (isLoverOf(actor, target)) {
+  if (hasMutualRomance(actor, target)) {
+    return pickSpeechLine(actor, LOVER_ACTOR, ['……'])
+  }
+  if (hasRomanticFeelings(actor, target)) {
     return pickSpeechLine(actor, LOVER_ACTOR, ['……'])
   }
 
@@ -155,7 +164,10 @@ export function buildFlirtTargetLine(
   actor: Character,
   target: Character,
 ): string {
-  if (isLoverOf(target, actor) || isLoverOf(actor, target)) {
+  if (hasMutualRomance(actor, target)) {
+    return pickSpeechLine(target, LOVER_TARGET, ['……'])
+  }
+  if (hasRomanticFeelings(target, actor)) {
     return pickSpeechLine(target, LOVER_TARGET, ['……'])
   }
 

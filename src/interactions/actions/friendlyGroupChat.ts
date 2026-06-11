@@ -3,6 +3,7 @@ import type {
   InteractionResult,
 } from '../../types/interactions'
 import type { GameState } from '../../types/game'
+import { applyBondDeltaToCharacters } from '../../utils/relationshipBonds'
 import {
   canFriendlyInteract,
   friendlyInteractDisabledReason,
@@ -73,7 +74,24 @@ export const friendlyGroupChatAction: InteractionActionHandler = {
       .map((id) => state.characters[id]?.name)
       .filter(Boolean) as string[]
 
+    let characters = { ...state.characters }
+    for (const targetId of targetIds) {
+      characters = applyBondDeltaToCharacters(
+        characters,
+        ctx.actorId,
+        targetId,
+        { friendship: 4 },
+      )
+      characters = applyBondDeltaToCharacters(
+        characters,
+        targetId,
+        ctx.actorId,
+        { friendship: 2 },
+      )
+    }
+
     return {
+      state: { characters },
       entry: {
         id: nextId(),
         year: state.year,

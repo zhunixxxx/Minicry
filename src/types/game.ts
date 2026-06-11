@@ -7,15 +7,34 @@ export type RelationType =
   | 'ex_spouse'
   | 'engaged'
   | 'sibling'
+  /** @deprecated 已迁移至 bonds，仅用于旧存档兼容 */
   | 'lover'
+  /** @deprecated 已迁移至 bonds，仅用于旧存档兼容 */
   | 'rival'
+  /** @deprecated 已迁移至 bonds，仅用于旧存档兼容 */
   | 'ally'
+
+/** 单向情感：我对某人的友情与爱情（0–100，互不影响） */
+export interface RelationshipBond {
+  friendship: number
+  romance: number
+}
 
 export interface Relation {
   targetId: string
   type: RelationType
   label?: string
 }
+
+/** 亲缘/身份类关系，不含情感条 */
+export const KINSHIP_RELATION_TYPES: RelationType[] = [
+  'parent',
+  'child',
+  'spouse',
+  'ex_spouse',
+  'engaged',
+  'sibling',
+]
 
 export interface CharacterAttributes {
   diplomacy: number
@@ -45,6 +64,8 @@ export interface Character {
   traits: string[]
   preferences: string[]
   relations: Relation[]
+  /** 我对他人的情感倾向（单向）；友情与爱情分轨 */
+  bonds: Record<string, RelationshipBond>
   parentIds: string[]
   spouseIds: string[]
   isAlive: boolean
@@ -76,11 +97,20 @@ export type NarrativeEventKind =
   | 'intervention_rivalry'
   | 'intervention_custom'
 
+/** 会面结束时与会者关系相较开始时的变化 */
+export type MeetingRelationOutcome = 'improved' | 'worsened' | 'unchanged'
+
 /** 生成气泡反应时的上下文（如发起者、目标） */
 export interface NarrativeReactionContext {
   actorId?: string
   targetId?: string
   crossHouse?: boolean
+  /** 会面整体关系变化（用于结束叙事） */
+  meetingOutcome?: MeetingRelationOutcome
+  /** 会面开始时各参与者 relations 快照（用于结束气泡） */
+  meetingInitialRelations?: Record<string, Relation[]>
+  /** 会面开始时各参与者 bonds 快照 */
+  meetingInitialBonds?: Record<string, Record<string, RelationshipBond>>
 }
 
 export interface NarrativeEntry {
@@ -114,6 +144,12 @@ export interface GameState {
 export interface MeetingSession {
   hostId: string
   participantIds: string[]
+  /** 会面期间降生的子女（仅展示于会晤图谱） */
+  bornChildIds: string[]
+  /** 会面开始时各参与者 relations 快照，用于结束时对比 */
+  initialRelations: Record<string, Relation[]>
+  /** 会面开始时各参与者 bonds 快照 */
+  initialBonds: Record<string, Record<string, RelationshipBond>>
 }
 
 export type InterventionAction =

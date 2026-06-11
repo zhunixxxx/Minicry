@@ -4,6 +4,7 @@ import {
   initialGameState,
 } from '../data/initialState'
 import type { GameState } from '../types/game'
+import { migrateAllCharacterBonds } from './relationshipBonds'
 
 const STORAGE_KEY = 'minicry:game-state'
 
@@ -22,7 +23,10 @@ export function loadGameState(): GameState | null {
       return null
     }
 
-    return parsed
+    return {
+      ...parsed,
+      characters: migrateAllCharacterBonds(parsed.characters),
+    }
   } catch {
     return null
   }

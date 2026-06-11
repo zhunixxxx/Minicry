@@ -407,13 +407,16 @@ function layoutParticipantGroup(
   return { nodes, edges, width: maxWidth, height }
 }
 
-/** 会晤布局：仅展示参与者，仅有血缘/家族关系的才连线 */
+/** 会晤布局：参与者与会面期间降生的子女，有血缘/婚姻关系才连线 */
 export function layoutMeetingTree(
   participantIds: string[],
   characters: Record<string, Character>,
+  bornChildIds: string[] = [],
 ): TreeLayout {
   const participants = new Set(
-    participantIds.filter((id) => characters[id]?.isAlive !== false),
+    [...participantIds, ...bornChildIds].filter(
+      (id) => characters[id]?.isAlive !== false,
+    ),
   )
 
   if (participants.size === 0) {

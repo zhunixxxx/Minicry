@@ -43,6 +43,8 @@ import {
   buildMeetingEndEntry,
   buildMeetingStartEntry,
 } from './utils/meetingNarrative'
+import { snapshotParticipantBonds } from './utils/relationshipBonds'
+import { snapshotParticipantRelations } from './utils/meetingRelations'
 import { executeInteraction } from './interactions/executeInteraction'
 import {
   buildInteractionDialogues,
@@ -168,6 +170,9 @@ export default function App() {
     const session: MeetingSession = {
       hostId: state.selectedCharacterId,
       participantIds: unique,
+      bornChildIds: [],
+      initialRelations: snapshotParticipantRelations(unique, state.characters),
+      initialBonds: snapshotParticipantBonds(unique, state.characters),
     }
     const entry = buildMeetingStartEntry(state, session)
 
@@ -300,6 +305,10 @@ export default function App() {
     (confirm: ReproductionConfirmInput) => {
       if (!reproductionDraft) return
       const result = applyReproduction(state, reproductionDraft, confirm)
+      const newCharId = Object.keys(result.state.characters ?? {}).find(
+        (id) => !state.characters[id],
+      )
+
       setState((prev) => ({
         ...prev,
         ...result.state,
@@ -309,9 +318,27 @@ export default function App() {
       if (result.entry.reactions) {
         showReactions(result.entry.reactions)
       }
+
+      if (meetingSession && newCharId) {
+        const { fatherId, motherId } = reproductionDraft
+        const parentsInMeeting =
+          meetingSession.participantIds.includes(fatherId) &&
+          meetingSession.participantIds.includes(motherId)
+        if (parentsInMeeting) {
+          setMeetingSession((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  bornChildIds: [...prev.bornChildIds, newCharId],
+                }
+              : null,
+          )
+        }
+      }
+
       setReproductionDraft(null)
     },
-    [reproductionDraft, state, showReactions],
+    [reproductionDraft, state, showReactions, meetingSession],
   )
 
   const clearSessionState = useCallback(() => {

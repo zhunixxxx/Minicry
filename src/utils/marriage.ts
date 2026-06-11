@@ -16,6 +16,7 @@ import {
 import { formatCharacterName } from './createCharacter'
 import { getCharacterSurname, resolveParents } from './reproduction'
 import { enrichNarrativeEntry } from './eventReactions'
+import { ensureMinBond, setBondOnCharacter } from './relationshipBonds'
 
 function addRelation(
   relations: Relation[],
@@ -195,14 +196,22 @@ export function applyProposal(
 
   const updatedCharacters: Record<string, Character> = { ...state.characters }
 
-  updatedCharacters[ctx.actorId] = {
-    ...actor,
-    relations: addRelation(actor.relations, ctx.targetId, 'engaged', '未婚夫/妻'),
-  }
-  updatedCharacters[ctx.targetId] = {
-    ...target,
-    relations: addRelation(target.relations, ctx.actorId, 'engaged', '未婚夫/妻'),
-  }
+  updatedCharacters[ctx.actorId] = ensureMinBond(
+    {
+      ...actor,
+      relations: addRelation(actor.relations, ctx.targetId, 'engaged', '未婚夫/妻'),
+    },
+    ctx.targetId,
+    { friendship: 50, romance: 68 },
+  )
+  updatedCharacters[ctx.targetId] = ensureMinBond(
+    {
+      ...target,
+      relations: addRelation(target.relations, ctx.actorId, 'engaged', '未婚夫/妻'),
+    },
+    ctx.actorId,
+    { friendship: 50, romance: 68 },
+  )
 
   return {
     state: { characters: updatedCharacters },
@@ -449,10 +458,14 @@ export function applyMarriage(
       'lover',
     ]),
   }
-  updatedActor = {
-    ...updatedActor,
-    relations: addRelation(updatedActor.relations, draft.targetId, 'spouse', '配偶'),
-  }
+  updatedActor = ensureMinBond(
+    {
+      ...updatedActor,
+      relations: addRelation(updatedActor.relations, draft.targetId, 'spouse', '配偶'),
+    },
+    draft.targetId,
+    { friendship: 65, romance: 82 },
+  )
 
   let updatedTarget: Character = {
     ...target,
@@ -464,10 +477,14 @@ export function applyMarriage(
       'lover',
     ]),
   }
-  updatedTarget = {
-    ...updatedTarget,
-    relations: addRelation(updatedTarget.relations, draft.actorId, 'spouse', '配偶'),
-  }
+  updatedTarget = ensureMinBond(
+    {
+      ...updatedTarget,
+      relations: addRelation(updatedTarget.relations, draft.actorId, 'spouse', '配偶'),
+    },
+    draft.actorId,
+    { friendship: 65, romance: 82 },
+  )
 
   if (crossHouse) {
     if (moverId === draft.actorId) {
@@ -664,7 +681,6 @@ function stripSpouseFromCharacter(
   char: Character,
   exId: string,
   exLabel: string,
-  postRelation: { type: 'ally' | 'rival'; label: string },
 ): Character {
   let relations = removeRelations(char.relations, exId, [
     'spouse',
@@ -674,13 +690,21 @@ function stripSpouseFromCharacter(
     'rival',
   ])
   relations = addRelation(relations, exId, 'ex_spouse', exLabel)
-  relations = addRelation(relations, exId, postRelation.type, postRelation.label)
 
   return {
     ...char,
     spouseIds: char.spouseIds.filter((id) => id !== exId),
     relations,
   }
+}
+
+function applyPostDivorceBond(
+  char: Character,
+  exId: string,
+  kind: DivorceKind,
+): Character {
+  const friendship = kind === 'amicable' ? 58 : 12
+  return setBondOnCharacter(char, exId, { friendship, romance: 0 })
 }
 
 let divorceCounter = 0
@@ -734,24 +758,25 @@ export function applyDivorce(
     throw new Error('Divorce actors not found')
   }
 
-  const postRelation =
-    draft.kind === 'amicable'
-      ? ({ type: 'ally' as const, label: '朋友' })
-      : ({ type: 'rival' as const, label: '对立者' })
-
   const updatedCharacters: Record<string, Character> = { ...state.characters }
 
-  updatedCharacters[draft.actorId] = stripSpouseFromCharacter(
-    actor,
+  updatedCharacters[draft.actorId] = applyPostDivorceBond(
+    stripSpouseFromCharacter(
+      actor,
+      draft.targetId,
+      exSpouseLabel(target.gender),
+    ),
     draft.targetId,
-    exSpouseLabel(target.gender),
-    postRelation,
+    draft.kind,
   )
-  updatedCharacters[draft.targetId] = stripSpouseFromCharacter(
-    target,
+  updatedCharacters[draft.targetId] = applyPostDivorceBond(
+    stripSpouseFromCharacter(
+      target,
+      draft.actorId,
+      exSpouseLabel(actor.gender),
+    ),
     draft.actorId,
-    exSpouseLabel(actor.gender),
-    postRelation,
+    draft.kind,
   )
 
   const returnNames: string[] = []

@@ -13,7 +13,7 @@ const DATA_ACTIONS = [
   {
     id: 'reset' as const,
     label: '重置存档',
-    description: '清空当前数据，恢复为预设的黑木与银纱家族档案。',
+    description: '清空当前数据，恢复为预设的金雀花与兰开斯特家族档案。',
     confirmTitle: '确认重置存档？',
     confirmText: '所有修改将丢失，世界将恢复为初始预设状态。此操作不可撤销。',
     confirmLabel: '确认重置',

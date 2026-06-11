@@ -38,6 +38,12 @@ const NODE_H = 100
 const PARENT_STEM_LEN = 16
 const MORE_BTN_SIZE = 18
 
+function isMeetingMember(session: MeetingSession, id: string): boolean {
+  return (
+    session.participantIds.includes(id) || session.bornChildIds.includes(id)
+  )
+}
+
 /** 夫妻从节点下方垂落汇合；有子女时继续分叉连至各子女 */
 function buildCoupleConnectorPath(
   parentIds: string[],
@@ -79,9 +85,6 @@ function buildCoupleConnectorPath(
       : (parentCenters[0] + parentCenters[parentCenters.length - 1]) / 2
 
   if (children.length === 0) {
-    if (parents.length >= 2) {
-      parts.push(`M ${centerX} ${stemMergeY} L ${centerX} ${stemMergeY + PARENT_STEM_LEN}`)
-    }
     return parts.join(' ')
   }
 
@@ -148,7 +151,11 @@ export function FamilyTreeStage({
 
   const layout = useMemo(() => {
     if (meetingSession) {
-      return layoutMeetingTree(meetingSession.participantIds, characters)
+      return layoutMeetingTree(
+        meetingSession.participantIds,
+        characters,
+        meetingSession.bornChildIds,
+      )
     }
     return layoutFamilyTree(focusCharacterId, characters, focusedHouseId)
   }, [meetingSession, focusCharacterId, focusedHouseId, characters])
@@ -416,7 +423,7 @@ export function FamilyTreeStage({
       setExpandedCategoryId(null)
       setMeetingSelection(new Set())
       if (isMeeting) {
-        if (!meetingSession?.participantIds.includes(id)) return
+        if (!meetingSession || !isMeetingMember(meetingSession, id)) return
         onSelectProtagonist(id)
         return
       }
@@ -431,7 +438,7 @@ export function FamilyTreeStage({
       e.stopPropagation()
       if (dragRef.current.didDrag) return
       if (nodeId === selectedCharacterId) return
-      if (isMeeting && !meetingSession?.participantIds.includes(nodeId)) return
+      if (isMeeting && meetingSession && !isMeetingMember(meetingSession, nodeId)) return
 
       const { targetId, targetIds } = computeInteractionTargets(
         nodeId,
@@ -458,7 +465,7 @@ export function FamilyTreeStage({
 
       if (isMultiSelectModifier(e)) {
         if (nodeId === selectedCharacterId) return
-        if (isMeeting && !meetingSession?.participantIds.includes(nodeId)) return
+        if (isMeeting && meetingSession && !isMeetingMember(meetingSession, nodeId)) return
         setMeetingSelection((prev) => {
           const next = new Set(prev)
           if (next.has(nodeId)) next.delete(nodeId)

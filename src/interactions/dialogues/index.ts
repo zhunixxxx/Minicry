@@ -116,7 +116,7 @@ function buildProposeDialogues(
   return [
     {
       characterId: ctx.actorId,
-      text: buildProposeActorLine(actor),
+      text: buildProposeActorLine(actor, target),
     },
     {
       characterId: ctx.targetId,

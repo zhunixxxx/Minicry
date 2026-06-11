@@ -1036,6 +1036,103 @@ body {
   color: var(--text-primary);
 }
 
+/* ── Relationship bond bars ── */
+.bond-empty-hint {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.bond-partner-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.bond-partner-item {
+  padding: 0.55rem 0.6rem;
+  background: var(--bg-elevated);
+  border-radius: var(--radius);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.bond-partner-name {
+  display: inline-block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 0.45rem;
+}
+
+.bond-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.bond-direction-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.28rem;
+}
+
+.bond-direction-label {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  letter-spacing: 0.02em;
+}
+
+.bond-track-row {
+  display: grid;
+  grid-template-columns: 2.1rem 1fr 1.6rem 3.2rem;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.bond-bars--compact .bond-track-row {
+  grid-template-columns: 2rem 1fr 1.4rem 2.8rem;
+}
+
+.bond-axis-label {
+  font-size: 0.68rem;
+  color: var(--text-secondary);
+}
+
+.bond-track {
+  height: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.bond-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.25s ease;
+}
+
+.bond-fill--friendship {
+  background: linear-gradient(90deg, #3d7ab8, #54a0ff);
+}
+
+.bond-fill--romance {
+  background: linear-gradient(90deg, #c0396d, #e84393);
+}
+
+.bond-value {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.bond-tier {
+  font-size: 0.66rem;
+  color: var(--text-secondary);
+  text-align: right;
+  white-space: nowrap;
+}
+
 /* ── Clickable character names ── */
 .character-link {
   display: inline;

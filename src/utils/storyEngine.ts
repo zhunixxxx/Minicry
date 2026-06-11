@@ -6,6 +6,7 @@ import {
   parseAvatarId,
 } from './avatars'
 import { enrichNarrativeEntry } from './eventReactions'
+import { applyBondDelta } from './relationshipBonds'
 import { formatDate } from './familyTree'
 
 let entryCounter = 100
@@ -227,13 +228,10 @@ export function interveneArrangeMarriage(
     return { state: {}, entry }
   }
 
-  const updatedChar: Character = {
-    ...char,
-    relations: [
-      ...char.relations,
-      { targetId: partner.id, type: 'lover', label: '政治婚约对象' },
-    ],
-  }
+  const updatedChar = applyBondDelta(char, partner.id, {
+    friendship: 35,
+    romance: 42,
+  })
 
   const entry = enrichNarrativeEntry(
     {

@@ -92,6 +92,7 @@ export function buildCharacterFromInput(
     traits: input.traits,
     preferences: input.preferences,
     relations,
+    bonds: {},
     parentIds: [...input.parentIds],
     spouseIds: input.spouseId ? [input.spouseId] : [],
     isAlive: true,

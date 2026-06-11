@@ -4,6 +4,7 @@ import type {
   InteractionResult,
 } from '../../types/interactions'
 import type { GameState } from '../../types/game'
+import { applyBondDeltaToCharacters } from '../../utils/relationshipBonds'
 import { canFriendlyInteract, friendlyInteractDisabledReason } from '../utils'
 
 let greetCounter = 0
@@ -64,7 +65,16 @@ export const friendlyGreetAction: InteractionActionHandler = {
       throw new Error('Interaction actors not found')
     }
 
+    let characters = { ...state.characters }
+    characters = applyBondDeltaToCharacters(characters, ctx.actorId, ctx.targetId, {
+      friendship: 6,
+    })
+    characters = applyBondDeltaToCharacters(characters, ctx.targetId, ctx.actorId, {
+      friendship: 2,
+    })
+
     return {
+      state: { characters },
       entry: {
         id: nextId(),
         year: state.year,

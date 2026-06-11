@@ -1,4 +1,5 @@
 import type { Character } from '../types/game'
+import { isMutualRomance } from './relationshipBonds'
 
 export function isRomanticPartner(
   aId: string,
@@ -12,12 +13,5 @@ export function isRomanticPartner(
   const isSpouse =
     a.spouseIds.includes(bId) && b.spouseIds.includes(aId)
 
-  const aLovesB = a.relations.some(
-    (r) => r.targetId === bId && r.type === 'lover',
-  )
-  const bLovesA = b.relations.some(
-    (r) => r.targetId === aId && r.type === 'lover',
-  )
-
-  return isSpouse || (aLovesB && bLovesA)
+  return isSpouse || isMutualRomance(aId, bId, characters)
 }

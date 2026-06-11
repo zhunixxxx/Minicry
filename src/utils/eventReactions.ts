@@ -5,7 +5,7 @@ import { buildEventKindReaction } from './eventReactionDialogues'
 const PRESET_REACTIONS: Record<string, Record<string, string>> = {
   'n-2': {
     'char-elena': '这一天，我等了很久。',
-    'char-aldrin': '黑木庄园的未来，交给你了。',
+    'char-aldrin': '金雀花庄园的未来，交给你了。',
     'char-cedric': '姐姐……她确实比我更适合。',
   },
   'n-3': {
@@ -14,7 +14,7 @@ const PRESET_REACTIONS: Record<string, Record<string, string>> = {
     'char-lyra': '你们的事，我会守口如瓶。',
   },
   'n-4': {
-    'char-theron': '该让黑木知道，这河道由谁说了算。',
+    'char-theron': '该让金雀花知道，这河道由谁说了算。',
     'char-aldrin': '塞隆这是在逼我们出手。',
   },
 }

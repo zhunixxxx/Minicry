@@ -4,6 +4,7 @@ import type {
   NarrativeEventKind,
 } from '../types/game'
 import { getSpeechAgeGroup, pick, pickSpeechLine } from './ageSpeech'
+import { comparePersonalMeetingRelations } from './meetingRelations'
 
 type ReactionRole = 'actor' | 'target' | 'child' | 'witness'
 
@@ -151,6 +152,26 @@ const MEETING_END_CROSS = [
   '今日会谈，各自思量。',
 ]
 
+const MEETING_END_IMPROVED = [
+  '还想再见到你。',
+  '今天聊得很开心，改日再聚。',
+  '后会有期，期待下次见面。',
+  '难得谈得这么投机，别让我等太久。',
+  '走之前，我想再说声——很高兴今天来了。',
+]
+const MEETING_END_WORSEENED = [
+  '下次不想再见了。',
+  '今日到此为止，告辞。',
+  '不必相送了，我先走。',
+  '话已说尽，往后各走各路吧。',
+  '今日这一面，够了。',
+]
+const MEETING_END_UNCHANGED = [
+  '那就先这样，回见。',
+  '今日先告退，改日再联系。',
+  '话已说完，我先走了。',
+]
+
 // ── 求婚 ────────────────────────────────────────────────
 
 const PROPOSE_ACTOR = [
@@ -269,6 +290,7 @@ function buildMeetingReaction(
   char: Character,
   entry: NarrativeEntry,
   phase: 'start' | 'end',
+  characters: Record<string, Character>,
 ): string {
   const crossHouse = entry.reactionContext?.crossHouse ?? false
   const group = getSpeechAgeGroup(char.age)
@@ -288,7 +310,42 @@ function buildMeetingReaction(
     return withTraitFlavor(char, pool)
   }
 
-  const pool = crossHouse ? MEETING_END_CROSS : MEETING_END_SAME
+  const initialRelations = entry.reactionContext?.meetingInitialRelations ?? {}
+  const initialBonds = entry.reactionContext?.meetingInitialBonds ?? {}
+  const participantIds = entry.characterIds ?? []
+  let outcome = entry.reactionContext?.meetingOutcome ?? 'unchanged'
+
+  if (participantIds.length > 0) {
+    outcome = comparePersonalMeetingRelations(
+      char.id,
+      participantIds,
+      initialRelations,
+      initialBonds,
+      characters,
+    )
+  }
+
+  if (outcome === 'improved') {
+    if (char.traits.includes('重感情')) {
+      return pick(['今天真是难忘。', '我会记住这一面的。', ...MEETING_END_IMPROVED])
+    }
+    if (char.traits.includes('开朗')) {
+      return pick(['太开心了，下次还要来！', ...MEETING_END_IMPROVED])
+    }
+    return withTraitFlavor(char, MEETING_END_IMPROVED)
+  }
+
+  if (outcome === 'worsened') {
+    if (char.traits.includes('骄傲')) {
+      return pick(['今日之辱，我记下了。', '休想我再踏足一步。', ...MEETING_END_WORSEENED])
+    }
+    if (char.traits.includes('冷静')) {
+      return pick(['不必多言，告辞。', '今日够了。', ...MEETING_END_WORSEENED])
+    }
+    return withTraitFlavor(char, MEETING_END_WORSEENED)
+  }
+
+  const pool = crossHouse ? MEETING_END_CROSS : [...MEETING_END_SAME, ...MEETING_END_UNCHANGED]
   return withTraitFlavor(char, pool)
 }
 
@@ -374,8 +431,10 @@ const KIND_BUILDERS: Partial<
   divorce_legal: (char, entry, chars) =>
     buildDivorceReaction(char, entry, chars, 'legal'),
   ambient: buildAmbientReaction,
-  meeting_start: (char, entry) => buildMeetingReaction(char, entry, 'start'),
-  meeting_end: (char, entry) => buildMeetingReaction(char, entry, 'end'),
+  meeting_start: (char, entry, chars) =>
+    buildMeetingReaction(char, entry, 'start', chars),
+  meeting_end: (char, entry, chars) =>
+    buildMeetingReaction(char, entry, 'end', chars),
   marriage_propose: buildProposeReaction,
   reproduction: (char, entry) => buildReproductionReaction(char, entry),
   intervention_diplomacy: (char) =>
