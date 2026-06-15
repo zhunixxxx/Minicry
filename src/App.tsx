@@ -51,11 +51,13 @@ import {
   dialoguesToReactions,
 } from './interactions/dialogues'
 import type { InteractionActionId, InteractionContext } from './types/interactions'
+import { requestAiSimulation } from './services/aiService'
+import { AiServiceError } from './types/aiSimulation'
+import { executeAiSimulationPlan } from './utils/aiSimulationEngine'
 import {
   interveneAdvanceTime,
   interveneArrangeMarriage,
   interveneBoostDiplomacy,
-  interveneCustomStory,
   interveneSparkRivalry,
 } from './utils/storyEngine'
 
@@ -80,6 +82,7 @@ function findLatestReactiveEntry(
 export default function App() {
   const [state, setState] = useState<GameState>(getInitialGameState)
   const [isProcessing, setIsProcessing] = useState(false)
+  const [aiError, setAiError] = useState<string | null>(null)
   const [activeReactions, setActiveReactions] = useState<CharacterReactions>({})
   const [createModalOpen, setCreateModalOpen] = useState(false)
   const [settingsModalOpen, setSettingsModalOpen] = useState(false)
@@ -365,6 +368,37 @@ export default function App() {
   const applyIntervention = useCallback(
     async (action: InterventionAction, customText?: string) => {
       setIsProcessing(true)
+      setAiError(null)
+
+      if (action === 'custom') {
+        try {
+          const { plan } = await requestAiSimulation(state, customText ?? '')
+          const result = executeAiSimulationPlan(state, plan)
+
+          setState((prev) => ({
+            ...prev,
+            ...result.state,
+            characters: result.state.characters
+              ? { ...prev.characters, ...result.state.characters }
+              : prev.characters,
+            narrative: [...prev.narrative, ...result.entries],
+          }))
+
+          if (result.reactions) {
+            showReactions(result.reactions)
+          }
+        } catch (err) {
+          if (err instanceof AiServiceError) {
+            setAiError(err.message)
+          } else {
+            setAiError('AI 推演失败，请稍后重试')
+            console.error(err)
+          }
+        } finally {
+          setIsProcessing(false)
+        }
+        return
+      }
 
       await new Promise((r) => setTimeout(r, 600))
 
@@ -386,9 +420,6 @@ export default function App() {
           break
         case 'spark_rivalry':
           result = interveneSparkRivalry(state)
-          break
-        case 'custom':
-          result = interveneCustomStory(state, customText ?? '')
           break
         default:
           setIsProcessing(false)
@@ -530,9 +561,14 @@ export default function App() {
 
       <InterventionPanel
         characterName={selected?.name ?? '—'}
+        characters={Object.values(state.characters)
+          .filter((c) => c.isAlive)
+          .map((c) => ({ id: c.id, name: c.name }))}
         onAction={applyIntervention}
+        onSelectCharacter={handleSelectCharacter}
         isProcessing={isProcessing}
         disabled={!hasCharacters}
+        errorMessage={aiError}
       />
     </div>
   )

@@ -1,11 +1,21 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import type { InterventionAction } from '../types/game'
+import { mentionValueToPlainText } from '../utils/mentionTokens'
+import { MentionTextarea } from './MentionTextarea'
+
+interface CharacterRef {
+  id: string
+  name: string
+}
 
 interface Props {
   characterName: string
+  characters: CharacterRef[]
   onAction: (action: InterventionAction, customText?: string) => void
+  onSelectCharacter: (id: string) => void
   isProcessing: boolean
   disabled?: boolean
+  errorMessage?: string | null
 }
 
 const QUICK_ACTIONS: { action: InterventionAction; label: string; icon: string }[] = [
@@ -14,14 +24,22 @@ const QUICK_ACTIONS: { action: InterventionAction; label: string; icon: string }
 
 export function InterventionPanel({
   characterName,
+  characters,
   onAction,
+  onSelectCharacter,
   isProcessing,
   disabled = false,
+  errorMessage = null,
 }: Props) {
   const [customText, setCustomText] = useState('')
 
+  const aliveCharacters = useMemo(
+    () => characters.filter((c) => c.name),
+    [characters],
+  )
+
   function handleSubmit() {
-    const trimmed = customText.trim()
+    const trimmed = mentionValueToPlainText(customText).trim()
     if (!trimmed || isProcessing || disabled) return
     onAction('custom', trimmed)
     setCustomText('')
@@ -54,30 +72,32 @@ export function InterventionPanel({
           </div>
 
           <div className="custom-intervention">
-            <textarea
-              className="custom-input"
-              placeholder="写下你想发生的事……例如：「让艾琳娜借拜访之名，于花园与罗万密会」"
+            <MentionTextarea
               value={customText}
-              onChange={(e) => setCustomText(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault()
-                  handleSubmit()
-                }
-              }}
+              onChange={setCustomText}
+              characters={aliveCharacters}
+              onMentionClick={onSelectCharacter}
+              placeholder="写下你想发生的事……输入 @ 可补全角色名，例如：「让@艾琳娜 借拜访之名，于花园与@罗万 密会」"
               rows={2}
               disabled={isProcessing || disabled}
+              onSubmit={handleSubmit}
             />
             <button
               type="button"
               className="submit-btn"
-              disabled={!customText.trim() || isProcessing || disabled}
+              disabled={!mentionValueToPlainText(customText).trim() || isProcessing || disabled}
               onClick={handleSubmit}
             >
               {isProcessing ? '推演中…' : 'AI 推演'}
             </button>
           </div>
         </div>
+
+        {errorMessage && (
+          <p className="intervention-error" role="alert">
+            {errorMessage}
+          </p>
+        )}
       </div>
     </footer>
   )

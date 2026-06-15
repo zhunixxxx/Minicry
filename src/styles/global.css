@@ -1897,6 +1897,93 @@ body {
   align-items: stretch;
 }
 
+.mention-textarea-wrap {
+  flex: 1;
+  position: relative;
+}
+
+.mention-editor {
+  width: 100%;
+  min-height: calc(0.82rem * 1.5 * 2 + 1rem);
+  max-height: calc(0.82rem * 1.5 * 4 + 1rem);
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.mention-editor:empty::before {
+  content: attr(data-placeholder);
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.mention-editor:focus {
+  outline: none;
+  border-color: var(--accent-gold-dim);
+}
+
+.mention-token {
+  display: inline;
+  color: var(--accent-gold);
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-color: var(--accent-gold-dim);
+  text-underline-offset: 2px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.mention-token:hover {
+  color: #5dd665;
+  text-decoration-color: #5dd665;
+}
+
+.mention-dropdown {
+  margin: 0;
+  padding: 0.15rem 0;
+  list-style: none;
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  box-shadow: 0 2px 10px rgba(45, 64, 87, 0.14);
+  max-height: 132px;
+  overflow-y: auto;
+  z-index: 1200;
+}
+
+.mention-option {
+  display: block;
+  width: 100%;
+  padding: 0.2rem 0.5rem;
+  border: none;
+  background: transparent;
+  text-align: left;
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  line-height: 1.35;
+  color: var(--text-primary);
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mention-option:hover,
+.mention-option.active {
+  background: var(--bg-panel-hover);
+  color: var(--accent-gold);
+}
+
+.mention-option-name {
+  font-weight: 500;
+}
+
+.intervention-error {
+  margin: 0.45rem 0 0;
+  font-size: 0.75rem;
+  color: #c0392b;
+}
+
 .custom-input {
   flex: 1;
   padding: 0.5rem 0.75rem;
