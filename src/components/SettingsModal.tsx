@@ -1,4 +1,10 @@
 import { useEffect, useState } from 'react'
+import {
+  clearAiApiKey,
+  loadAiApiKey,
+  maskApiKey,
+  saveAiApiKey,
+} from '../utils/aiKeyStorage'
 
 interface Props {
   open: boolean
@@ -30,9 +36,20 @@ const DATA_ACTIONS = [
 
 export function SettingsModal({ open, onClose, onResetSave, onClearSave }: Props) {
   const [pending, setPending] = useState<PendingAction>(null)
+  const [apiKeyInput, setApiKeyInput] = useState('')
+  const [savedKey, setSavedKey] = useState<string | undefined>(undefined)
+  const [saveMessage, setSaveMessage] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!open) setPending(null)
+    if (!open) {
+      setPending(null)
+      setSaveMessage(null)
+      return
+    }
+
+    const key = loadAiApiKey()
+    setSavedKey(key)
+    setApiKeyInput(key ?? '')
   }, [open])
 
   useEffect(() => {
@@ -64,6 +81,22 @@ export function SettingsModal({ open, onClose, onResetSave, onClearSave }: Props
     onClose()
   }
 
+  function handleSaveApiKey() {
+    const trimmed = apiKeyInput.trim()
+    saveAiApiKey(trimmed)
+    const nextKey = loadAiApiKey()
+    setSavedKey(nextKey)
+    setApiKeyInput(nextKey ?? '')
+    setSaveMessage(trimmed ? 'API Key 已保存' : 'API Key 已清除')
+  }
+
+  function handleClearApiKey() {
+    clearAiApiKey()
+    setApiKeyInput('')
+    setSavedKey(undefined)
+    setSaveMessage('API Key 已清除')
+  }
+
   return (
     <div className="modal-overlay" onClick={onClose} role="presentation">
       <div
@@ -78,7 +111,7 @@ export function SettingsModal({ open, onClose, onResetSave, onClearSave }: Props
             <h2 id="settings-title" className="modal-title">
               设置
             </h2>
-            <p className="modal-subtitle">管理世界档案与数据</p>
+            <p className="modal-subtitle">管理世界档案、数据与 AI 配置</p>
           </div>
           <button
             type="button"
@@ -113,8 +146,55 @@ export function SettingsModal({ open, onClose, onResetSave, onClearSave }: Props
               </div>
             </section>
           ) : (
-            <section className="settings-section">
-              <h3 className="settings-section-title">数据</h3>
+            <>
+              <section className="settings-section">
+                <h3 className="settings-section-title">AI</h3>
+                <div className="settings-ai-form">
+                  <label className="form-field settings-ai-field">
+                    <span>DeepSeek API Key</span>
+                    <input
+                      type="password"
+                      value={apiKeyInput}
+                      onChange={(e) => {
+                        setApiKeyInput(e.target.value)
+                        setSaveMessage(null)
+                      }}
+                      placeholder="sk-..."
+                      autoComplete="off"
+                      spellCheck={false}
+                    />
+                  </label>
+                  <p className="settings-ai-hint">
+                    用于剧情推演功能，仅保存在本机浏览器中。
+                  </p>
+                  <div className="settings-ai-actions">
+                    <button
+                      type="button"
+                      className="btn-primary"
+                      onClick={handleSaveApiKey}
+                    >
+                      保存 Key
+                    </button>
+                    {savedKey ? (
+                      <button
+                        type="button"
+                        className="btn-secondary"
+                        onClick={handleClearApiKey}
+                      >
+                        清除
+                      </button>
+                    ) : null}
+                  </div>
+                  {saveMessage ? (
+                    <p className="settings-ai-feedback" role="status">
+                      {saveMessage}
+                    </p>
+                  ) : null}
+                </div>
+              </section>
+
+              <section className="settings-section">
+                <h3 className="settings-section-title">数据</h3>
               <ul className="settings-action-list">
                 {DATA_ACTIONS.map((action) => (
                   <li key={action.id} className="settings-action-item">
@@ -133,6 +213,7 @@ export function SettingsModal({ open, onClose, onResetSave, onClearSave }: Props
                 ))}
               </ul>
             </section>
+            </>
           )}
         </div>
       </div>

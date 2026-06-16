@@ -6,6 +6,7 @@ import {
   type AiSimulationResult,
 } from '../types/aiSimulation'
 import { formatDate } from '../utils/familyTree'
+import { loadAiApiKey } from '../utils/aiKeyStorage'
 
 const AVAILABLE_ACTIONS: InteractionActionId[] = [
   'friendly.greet',
@@ -15,7 +16,7 @@ const AVAILABLE_ACTIONS: InteractionActionId[] = [
 ]
 
 function getApiKey(): string | undefined {
-  return import.meta.env.VITE_DEEPSEEK_API_KEY?.trim() || undefined
+  return loadAiApiKey()
 }
 
 function getApiUrl(): string {
@@ -144,7 +145,7 @@ export async function requestAiSimulation(
   const apiKey = getApiKey()
   if (!apiKey) {
     throw new AiServiceError(
-      '未配置 API Key。请在项目根目录创建 .env.local 并设置 VITE_DEEPSEEK_API_KEY',
+      '未配置 API Key。请在设置中填写 DeepSeek API Key',
       'no_api_key',
     )
   }

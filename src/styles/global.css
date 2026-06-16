@@ -731,6 +731,42 @@ body {
   margin-bottom: 0.75rem;
 }
 
+.settings-section + .settings-section {
+  margin-top: 1.5rem;
+}
+
+.settings-ai-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.settings-ai-field input {
+  width: 100%;
+}
+
+.settings-ai-hint {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  line-height: 1.55;
+}
+
+.settings-ai-hint code {
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+}
+
+.settings-ai-actions {
+  display: flex;
+  gap: 0.6rem;
+}
+
+.settings-ai-feedback {
+  font-size: 0.75rem;
+  color: var(--accent-gold-dim);
+}
+
 .settings-action-list {
   list-style: none;
   display: flex;
